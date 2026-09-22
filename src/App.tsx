@@ -8,6 +8,9 @@ import { NotificationsFeed } from './components/NotificationsFeed.js';
 import { AuditLogs } from './components/AuditLogs.js';
 import { DocsViewer } from './components/DocsViewer.js';
 import { ExportKit } from './components/ExportKit.js';
+import { DevaiChat } from './components/DevaiChat.js';
+import { ChatHistory } from './components/ChatHistory.js';
+import { KnowledgeCenter } from './components/KnowledgeCenter.js';
 import type {
   ServiceStatusInfo,
   ServiceType,
@@ -19,8 +22,9 @@ import type {
 } from './types/index.js';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('status');
+  const [activeTab, setActiveTab] = useState<string>('chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedChatSessionId, setSelectedChatSessionId] = useState<string | null>(null);
 
   // Authenticated Supabase User (read-only session display)
   const [currentUser, setCurrentUser] = useState<SupabaseAuthUser>({
@@ -312,8 +316,18 @@ export default function App() {
         />
 
         {/* Main Content View */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-6xl mx-auto">
+        <main
+          className={`flex-1 ${
+            activeTab === 'chat'
+              ? 'flex flex-col h-[calc(100vh-65px)] overflow-hidden p-2 sm:p-4'
+              : 'overflow-y-auto p-4 sm:p-6 lg:p-8'
+          }`}
+        >
+          <div
+            className={`w-full max-w-6xl mx-auto ${
+              activeTab === 'chat' ? 'flex-1 flex flex-col h-full min-h-0' : ''
+            }`}
+          >
             {activeTab === 'status' && (
               <StatusDashboard
                 services={services}
@@ -323,6 +337,40 @@ export default function App() {
                 onNavigateToCoding={() => setActiveTab('coding')}
                 onNavigateToDeployments={() => setActiveTab('deployments')}
                 onNavigateToNotifications={() => setActiveTab('notifications')}
+              />
+            )}
+
+            {activeTab === 'chat' && (
+              <DevaiChat
+                activeSessionId={selectedChatSessionId}
+                onSelectSession={setSelectedChatSessionId}
+                onNavigateToHistory={() => setActiveTab('chathistory')}
+                onNavigateToKnowledge={() => setActiveTab('knowledge')}
+              />
+            )}
+
+            {activeTab === 'chathistory' && (
+              <ChatHistory
+                onOpenSession={(id) => {
+                  setSelectedChatSessionId(id);
+                  setActiveTab('chat');
+                }}
+                onCreateNewChat={async () => {
+                  try {
+                    const res = await fetch('/api/chat/sessions', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ title: 'Fresh Chat' }),
+                    });
+                    const data = await res.json();
+                    if (data.success && data.session) {
+                      setSelectedChatSessionId(data.session.id);
+                    }
+                  } catch (e) {
+                    console.error('Failed to create fresh chat:', e);
+                  }
+                  setActiveTab('chat');
+                }}
               />
             )}
 
@@ -350,6 +398,8 @@ export default function App() {
             {activeTab === 'logs' && (
               <AuditLogs logs={logs} onRefresh={fetchLogs} />
             )}
+
+            {activeTab === 'knowledge' && <KnowledgeCenter />}
 
             {activeTab === 'docs' && <DocsViewer />}
 

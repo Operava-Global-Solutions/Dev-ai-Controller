@@ -1,6 +1,6 @@
 {
-  "name": "Cloudflare Agent Hub",
-  "description": "Cloudflare Workers AI coding agent and operational dashboard monitoring Resend, Supabase, GitHub, Cloudflare, and OpenAI status, deployed applications, and notifications.",
+  "name": "Dev’ai Controller",
+  "description": "Dev’ai Controller — Cloudflare Workers AI coding agent and operational dashboard monitoring Resend, Supabase, GitHub, Cloudflare, and OpenAI status, deployed applications, chat history, and non-technical knowledge center.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

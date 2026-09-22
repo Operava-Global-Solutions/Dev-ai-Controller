@@ -51,36 +51,17 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('status')}
           className="flex items-center space-x-2.5 cursor-pointer"
         >
-          {/* Cloudflare Orange Logo */}
-          <div className="h-7 w-7 rounded-lg bg-[#f38020] flex items-center justify-center shadow-xs">
+          {/* Operava Orange-to-Purple Gradient Logo */}
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[#ff6b35] via-[#f38020] to-[#7928ca] flex items-center justify-center shadow-xs">
             <Zap className="h-4 w-4 text-white fill-current" />
           </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-sm tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
-                Cloudflare Agent Hub
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 font-medium">
-                Workers AI
-              </span>
-            </div>
-            <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] hidden sm:block">
-              Multi-Service Orchestration & Operational Status
-            </p>
-          </div>
+          <span className="font-bold text-sm tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
+            Dev’ai Controller
+          </span>
         </div>
       </div>
 
-      {/* Middle: Active AI Engine Pill */}
-      <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-[#f4f5f8] dark:bg-[#1a1e27] border border-[#e2e4e9] dark:border-[#2c3240] text-xs">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="font-medium text-[#1a1d24] dark:text-[#f0f3f6]">Cloudflare AI Core:</span>
-        <span className="font-mono text-orange-600 dark:text-orange-400">@cf/llama-3.3-70b</span>
-        <span className="text-[#80868b]">•</span>
-        <span className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">OpenAI Standby</span>
-      </div>
-
-      {/* Right side: Actions & Supabase Auth User */}
+      {/* Right side: Actions & User Profile */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Dark mode toggle */}
         <button
@@ -91,28 +72,18 @@ export const Header: React.FC<HeaderProps> = ({
           {isDarkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
         </button>
 
-        {/* Supabase Authenticated User Profile Pill */}
+        {/* User Profile Pill */}
         <div className="relative">
           <button
             onClick={() => setShowUserDropdown(!showUserDropdown)}
-            className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#f4f5f8] dark:bg-[#1a1e27] hover:bg-[#ebedf1] dark:hover:bg-[#222834] transition-colors border border-[#e2e4e9] dark:border-[#2c3240] cursor-pointer"
+            className="flex items-center space-x-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#f4f5f8] dark:bg-[#1a1e27] hover:bg-[#ebedf1] dark:hover:bg-[#222834] transition-colors border border-[#e2e4e9] dark:border-[#2c3240] cursor-pointer"
           >
             <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-2xs">
               {currentUser.name ? currentUser.name[0].toUpperCase() : 'J'}
             </div>
-            <div className="text-left hidden lg:block">
-              <div className="flex items-center space-x-1.5">
-                <span className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
-                  {currentUser.name}
-                </span>
-                <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                  {currentUser.role}
-                </span>
-              </div>
-              <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-[130px]">
-                {currentUser.email}
-              </p>
-            </div>
+            <span className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6] hidden sm:inline">
+              {currentUser.name}
+            </span>
           </button>
 
           {/* User Details Dropdown */}

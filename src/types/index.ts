@@ -143,8 +143,16 @@ export interface AiExecutionStep {
   timestamp?: number;
 }
 
+export interface NonTechExplanation {
+  simpleSummary: string;
+  actionableFix: string;
+  technicalDetails?: string;
+  suggestedActionLabel?: string;
+}
+
 export interface AiChatMessage {
   id: string;
+  sessionId?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
@@ -155,6 +163,43 @@ export interface AiChatMessage {
   status?: ActionStatus;
   logId?: string;
   aiProvider?: 'cloudflare_ai' | 'openai_fallback';
+  model?: string;
+  nonTechExplanation?: NonTechExplanation;
+  error?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  lastMessageSnippet?: string;
+  tags: string[];
+}
+
+export interface NonTechErrorArticle {
+  code: string;
+  title: string;
+  category: 'authentication' | 'rate_limit' | 'server' | 'database' | 'network';
+  severity: 'high' | 'medium' | 'low';
+  whatItMeans: string;
+  whyItHappened: string;
+  howToFixSteps: string[];
+  safeToIgnore?: boolean;
+}
+
+export interface ProcessGuideArticle {
+  id: string;
+  title: string;
+  badge: string;
+  summary: string;
+  steps: Array<{
+    step: number;
+    title: string;
+    description: string;
+  }>;
+  safetyTip: string;
 }
 
 export interface LLMDocEntry {

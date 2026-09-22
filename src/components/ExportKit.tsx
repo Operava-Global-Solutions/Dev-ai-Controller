@@ -29,14 +29,11 @@ export const ExportKit: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2">
             <h2 className="text-xl font-bold tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
-              Deploy Kit (Cloudflare Workers & GitHub Actions)
+              Deploy Kit
             </h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300">
-              Wrangler Ready
-            </span>
           </div>
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
-            Production repository configuration files ready for Wrangler CLI, Cloudflare Edge, and Supabase RLS migrations.
+            Configuration templates and export files.
           </p>
         </div>
 
@@ -51,7 +48,7 @@ export const ExportKit: React.FC = () => {
 
           <button
             onClick={handleDownload}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#f38020] hover:bg-[#d96e14] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" />
             <span>Download File</span>
@@ -72,7 +69,7 @@ export const ExportKit: React.FC = () => {
               onClick={() => setSelectedFile(file)}
               className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center space-x-2 transition-colors cursor-pointer ${
                 selectedFile.name === file.name
-                  ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-semibold border border-orange-200 dark:border-orange-800'
+                  ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800'
                   : 'text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f8f9fb] dark:hover:bg-[#1f242e]'
               }`}
             >

@@ -75,14 +75,11 @@ export const DeploymentsMonitor: React.FC<DeploymentsMonitorProps> = ({
                 <Globe className="h-4 w-4" />
               </span>
               <h2 className="text-base font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
-                Deployed Applications Monitor
+                Deployments
               </h2>
-              <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
-                Cloudflare Edge Runtime
-              </span>
             </div>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">
-              Real-time monitoring of live Cloudflare Workers, Pages, and edge services. All deployments run across 330+ edge PoPs with zero cold starts.
+              Overview of all active edge deployments and release history.
             </p>
           </div>
 
@@ -129,18 +126,18 @@ export const DeploymentsMonitor: React.FC<DeploymentsMonitorProps> = ({
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-[#5f6368] dark:text-[#9aa0a6]">
                   <div className="flex items-center space-x-1">
-                    <GitBranch className="h-3 w-3 text-orange-500" />
+                    <GitBranch className="h-3 w-3 text-purple-500" />
                     <span className="font-mono text-[#1a1d24] dark:text-[#f0f3f6]">{app.branch}</span>
                     <span className="font-mono text-[11px] opacity-70">({app.commitSha})</span>
                   </div>
 
                   <div className="flex items-center space-x-1">
-                    <Clock className="h-3 w-3 text-orange-500" />
+                    <Clock className="h-3 w-3 text-purple-500" />
                     <span>Deployed {new Date(app.deployedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
 
                   <div className="flex items-center space-x-1">
-                    <Zap className="h-3 w-3 text-orange-500" />
+                    <Zap className="h-3 w-3 text-purple-500" />
                     <span>P95 Latency: <strong className="text-[#1a1d24] dark:text-[#f0f3f6]">{app.latencyMs}ms</strong></span>
                   </div>
 
@@ -157,9 +154,9 @@ export const DeploymentsMonitor: React.FC<DeploymentsMonitorProps> = ({
                   href={app.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[#f0f2f5] dark:bg-[#202530] text-[#1a1d24] dark:text-[#f0f3f6] hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40 transition-colors border border-[#e2e4e9] dark:border-[#2c3240]"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[#f0f2f5] dark:bg-[#202530] text-[#1a1d24] dark:text-[#f0f3f6] hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/40 transition-colors border border-[#e2e4e9] dark:border-[#2c3240]"
                 >
-                  <Globe className="h-3.5 w-3.5 text-orange-500" />
+                  <Globe className="h-3.5 w-3.5 text-purple-500" />
                   <span>Visit Live</span>
                   <ExternalLink className="h-3 w-3 opacity-60" />
                 </a>
@@ -167,7 +164,7 @@ export const DeploymentsMonitor: React.FC<DeploymentsMonitorProps> = ({
                 <button
                   onClick={() => handleDeploy(app.id)}
                   disabled={isLoading || activeActionId === app.id}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/60 transition-colors border border-orange-200 dark:border-orange-800 cursor-pointer disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800 cursor-pointer disabled:opacity-50"
                 >
                   <Play className={`h-3.5 w-3.5 ${activeActionId === app.id ? 'animate-spin' : ''}`} />
                   <span>Redeploy</span>

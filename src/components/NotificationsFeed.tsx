@@ -72,18 +72,15 @@ export const NotificationsFeed: React.FC<NotificationsFeedProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400">
+              <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
                 <Bell className="h-4 w-4" />
               </span>
               <h2 className="text-base font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
-                Operational Notifications & Activity Feed
+                Notifications
               </h2>
-              <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
-                Resend & Edge Webhooks
-              </span>
             </div>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">
-              Real-time audit of transactional email deliveries, deployment notifications, and automated coding tasks.
+              Activity log and alerts across all connected services.
             </p>
           </div>
 
@@ -95,7 +92,7 @@ export const NotificationsFeed: React.FC<NotificationsFeedProps> = ({
                 onClick={() => setFilter(f)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition-all cursor-pointer ${
                   filter === f
-                    ? 'bg-white dark:bg-[#161a22] text-[#1a1d24] dark:text-[#f0f3f6] shadow-2xs'
+                    ? 'bg-white dark:bg-[#161a22] text-[#1a1d24] dark:text-[#f0f3f6] shadow-2xs font-semibold text-purple-600 dark:text-purple-400'
                     : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-[#1a1d24]'
                 }`}
               >
@@ -111,7 +108,7 @@ export const NotificationsFeed: React.FC<NotificationsFeedProps> = ({
         {filteredNotifications.map((notif) => (
           <div
             key={notif.id}
-            className="rounded-2xl border border-[#e2e4e9] dark:border-[#252a35] bg-white dark:bg-[#161a22] p-4.5 hover:border-orange-300 dark:hover:border-orange-900/60 transition-all shadow-2xs"
+            className="rounded-2xl border border-[#e2e4e9] dark:border-[#252a35] bg-white dark:bg-[#161a22] p-4.5 hover:border-purple-300 dark:hover:border-purple-900/60 transition-all shadow-2xs"
           >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="space-y-1">

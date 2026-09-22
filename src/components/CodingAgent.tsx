@@ -59,28 +59,12 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
                 <Sparkles className="h-4 w-4" />
               </span>
               <h2 className="text-base font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
-                Drive Coding Agent
+                Coding Agent
               </h2>
-              <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                Cloudflare AI Powered
-              </span>
             </div>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">
-              Inspects GitHub repositories, reads docs, finds target files, formulates surgical change plans, and generates verified code changes with pull requests.
+              Generate code changes, inspect repository files, and automate tasks.
             </p>
-          </div>
-
-          <div className="flex items-center space-x-2 text-xs">
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/80 text-orange-800 dark:text-orange-300">
-              <Zap className="h-3.5 w-3.5 text-orange-500" />
-              <span className="font-semibold">Primary:</span>
-              <span className="font-mono">@cf/meta/llama-3.3-70b</span>
-            </div>
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 text-blue-800 dark:text-blue-300">
-              <Cpu className="h-3.5 w-3.5 text-blue-500" />
-              <span className="font-semibold">Fallback:</span>
-              <span className="font-mono">gpt-4o-mini</span>
-            </div>
           </div>
         </div>
 
@@ -95,7 +79,7 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
               <select
                 value={selectedRepo}
                 onChange={(e) => setSelectedRepo(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-purple-500"
               >
                 <option value="operava/operava-worker-core">operava/operava-worker-core (Cloudflare Workers API)</option>
                 <option value="operava/ai-token-hub-frontend">operava/ai-token-hub-frontend (React + Vite Edge)</option>
@@ -115,7 +99,7 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
                 placeholder="branch name (e.g. feat/agent-coding)"
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-mono"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-mono"
               />
             </div>
           </div>
@@ -132,7 +116,7 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe the feature, bugfix, or refactoring task for the Cloudflare Coding Agent (e.g., 'Add Supabase JWT verification middleware and unit tests')..."
-              className="w-full p-3 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-orange-500 placeholder:text-[#80868b] resize-none"
+              className="w-full p-3 text-xs rounded-xl bg-[#f8f9fb] dark:bg-[#1f232c] border border-[#e2e4e9] dark:border-[#2e333d] text-[#1a1d24] dark:text-[#f0f3f6] focus:outline-hidden focus:ring-2 focus:ring-purple-500 placeholder:text-[#80868b] resize-none"
             />
           </div>
 
@@ -144,7 +128,7 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
                 key={i}
                 type="button"
                 onClick={() => setPrompt(qp)}
-                className="text-[10px] px-2.5 py-1 rounded-lg bg-[#f0f2f5] dark:bg-[#202530] text-[#5f6368] dark:text-[#9aa0a6] hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/40 dark:hover:text-orange-400 transition-colors cursor-pointer border border-[#e2e4e9] dark:border-[#2c3240]"
+                className="text-[10px] px-2.5 py-1 rounded-lg bg-[#f0f2f5] dark:bg-[#202530] text-[#5f6368] dark:text-[#9aa0a6] hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950/40 dark:hover:text-purple-400 transition-colors cursor-pointer border border-[#e2e4e9] dark:border-[#2c3240]"
               >
                 {qp}
               </button>
@@ -154,9 +138,9 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
           <div className="mt-4 flex items-center justify-between">
             <span className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">
               {isLoading ? (
-                <span className="flex items-center text-orange-600 dark:text-orange-400">
-                  <span className="h-2 w-2 rounded-full bg-orange-500 animate-ping mr-2" />
-                  Cloudflare Workers AI analyzing repo & generating code...
+                <span className="flex items-center text-purple-600 dark:text-purple-400">
+                  <span className="h-2 w-2 rounded-full bg-purple-500 animate-ping mr-2" />
+                  Dev’ai Workers AI analyzing repo & generating code...
                 </span>
               ) : (
                 'Non-destructive: Generates diffs and stages GitHub Pull Requests.'
@@ -166,7 +150,7 @@ export const CodingAgent: React.FC<CodingAgentProps> = ({
             <button
               type="submit"
               disabled={isLoading || !prompt.trim()}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#f38020] hover:bg-[#d96e14] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 text-white transition-all shadow-xs cursor-pointer disabled:opacity-50"
             >
               <Play className="h-3.5 w-3.5 fill-current" />
               <span>{isLoading ? 'Executing...' : 'Run Coding Agent'}</span>

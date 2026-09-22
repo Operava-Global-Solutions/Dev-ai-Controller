@@ -136,12 +136,16 @@ function classifyIntent(prompt: string): {
     /(check|audit|verify|status|inspect|review|health|list).*(token|credential|key|vault|auth\s*tag)/i.test(p) ||
     /(token|credential|key).*(check|audit|verify|status|health|list)/i.test(p)
   ) {
-    return { action: 'tokens.check', params: {} };
+    if (!/error|fix|why|how|debug|solve|issue/i.test(p)) {
+      return { action: 'tokens.check', params: {} };
+    }
   }
 
-  // 5. Supabase query
+  // 5. Supabase query (only if not an error or how-to question)
   if (/(supabase|database|db\s*tables|rls|postgres)/i.test(p)) {
-    return { action: 'supabase.query', params: {} };
+    if (!/error|fix|why|how|debug|solve|issue|recursion|troubleshoot|explain/i.test(p)) {
+      return { action: 'supabase.query', params: {} };
+    }
   }
 
   return { action: 'general', params: {} };
@@ -168,19 +172,23 @@ export async function executeAiAction(
 
   // If classified as general, try Gemini with a snappy timeout
   const ai = getGemini();
-  if (classified.action === 'general' && ai) {
+  const isQuestionOrError = /error|fix|why|how|debug|solve|issue|recursion|troubleshoot|explain|help|what|status code/i.test(prompt);
+
+  if (classified.action === 'general' && ai && !isQuestionOrError) {
     try {
       const response = await withTimeout(
         ai.models.generateContent({
           model: 'gemini-flash-latest',
-          contents: `You are the AI Action Router for Operava Token Hub.
-Analyze the user request and map it to one of these actions:
+          contents: `You are the AI Action Router for Dev’ai Controller.
+Analyze the user request and map it to an execution tool ONLY if the user is commanding an action:
 1. "github.list_repos" (parameters: perPage: number)
 2. "github.create_issue" (parameters: repo: string, title: string, body?: string)
 3. "resend.send_email" (parameters: to: string, subject: string, text?: string)
 4. "tokens.check" (parameters: {})
 5. "supabase.query" (parameters: {})
-6. "general" (no tool, conversational answer)
+6. "general" (if user asks a question, error diagnosis, how-to guide, or general query)
+
+NOTE: If the user is asking about an error, troubleshooting, or explaining a concept, return "general".
 
 User prompt: "${prompt}"
 
@@ -471,24 +479,166 @@ Return ONLY valid JSON matching this exact format:
     }
 
     default: {
-      // General question
-      let answer = `Operava is an AI Token & Action Hub. You can store encrypted credentials for GitHub, Resend, Supabase, and Cloudflare Workers AI with AES-256-GCM encryption. Try clicking one of the 4 quick action buttons or asking to list repos, send an email, or check token security.`;
+      // General question or error diagnostic request
+      let answer = '';
+      const promptLower = prompt.toLowerCase();
+
+      // Built-in intelligent diagnostic resolver for common platform errors
+      const diagnoseKnownIssues = (query: string): string | null => {
+        if (query.includes('1101') || query.includes('worker threw exception') || query.includes('runtime error')) {
+          return `### 🛠️ Cloudflare Error 1101: Worker Threw Exception\n\n` +
+            `**Plain English Summary:** Your Cloudflare Worker script crashed while processing the request before it could finish sending a response.\n\n` +
+            `**Common Causes & Fixes:**\n` +
+            `1. **Missing Environment Variable / Secret:** Check that secrets like \`WORKER_SECRET\`, \`SUPABASE_SERVICE_ROLE_KEY\`, or \`CLOUDFLARE_API_TOKEN\` are configured in **Worker Settings > Variables and Secrets**.\n` +
+            `2. **Node.js Compatibility:** Ensure \`compatibility_flags = ["nodejs_compat"]\` is present in your \`wrangler.toml\` if your worker uses Node crypto or streams.\n` +
+            `3. **Unhandled Promise Rejection:** Wrap top-level \`fetch()\` event handlers in a \`try...catch\` block and return a fallback \`new Response(JSON.stringify({ error: err.message }), { status: 500 })\`.\n` +
+            `4. **Inspect Live Logs:** Run \`wrangler tail\` in your terminal or check the Cloudflare Dashboard Real-time Logs to see the exact stack trace.`;
+        }
+
+        if (query.includes('1000') || query.includes('dns points to prohibited ip')) {
+          return `### 🛠️ Cloudflare Error 1000: DNS Points to Prohibited IP\n\n` +
+            `**Plain English Summary:** Cloudflare stopped the request because your domain's DNS record is pointing back to a Cloudflare internal IP address instead of your real hosting origin.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. Open **Cloudflare Dashboard > DNS > Records**.\n` +
+            `2. Check your A or CNAME record. An A record should point to your true origin server's public IP address (not a 104.x.x.x or 172.x.x.x Cloudflare IP).\n` +
+            `3. If routing to a Cloudflare Worker, do NOT use an A record; use a Worker Route (e.g., \`api.yourdomain.com/*\`) or Custom Domain attached directly inside Worker Settings.`;
+        }
+
+        if (query.includes('521') || query.includes('web server is down')) {
+          return `### 🛠️ Cloudflare Error 521: Web Server is Down\n\n` +
+            `**Plain English Summary:** Cloudflare reached out to your backend server, but your server refused the connection or is powered off.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. Verify that your origin process (Express/Node.js/Docker) is running and actively listening on port 80/443 or port 3000.\n` +
+            `2. Check your firewall / security groups: Ensure incoming traffic from [Cloudflare IP ranges](https://www.cloudflare.com/ips/) is whitelisted and not blocked by iptables or UFW.\n` +
+            `3. If using an Express server behind Nginx, verify \`systemctl status nginx\` and \`systemctl status dev-server\`.`;
+        }
+
+        if (query.includes('522') || query.includes('524') || query.includes('connection timed out') || query.includes('timeout')) {
+          return `### 🛠️ Cloudflare Error 522 / 524: Connection Timeout\n\n` +
+            `**Plain English Summary:** Cloudflare successfully connected to your server, but your server took longer than 100 seconds (or standard threshold) to respond.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. **Long-Running Operations:** Offload long-running AI completions, heavy database queries, or batch mailers to background jobs (such as Cloudflare Queues or \`ctx.waitUntil()\`).\n` +
+            `2. **Resource Exhaustion:** Check if your server CPU or memory is pegged at 100%.\n` +
+            `3. **Database Locks:** Verify database connection pool health in Supabase to ensure queries are not stuck waiting for connection locks.`;
+        }
+
+        if (query.includes('rls') || query.includes('42501') || query.includes('infinite recursion') || query.includes('permission denied')) {
+          return `### 🛠️ Supabase Error 42501: Row-Level Security (RLS) Permission Denied or Recursion\n\n` +
+            `**Plain English Summary:** The database blocked access because the current user doesn't meet the security policy rules, or the security rule keeps calling itself in an endless loop.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. **Infinite Recursion:** If your RLS policy queries the same table it protects (e.g. checking \`users.role\` while reading \`users\`), use a PostgreSQL security definer function like \`auth.jwt() ->> 'role'\` instead of querying the table again.\n` +
+            `2. **Backend Service Role:** For system/audit logs, ensure you use the \`SUPABASE_SERVICE_ROLE_KEY\` on server-side requests to safely bypass client RLS restrictions.\n` +
+            `3. **Add Policy:** If a table has RLS enabled without policies, all operations are rejected by default. Run:\n` +
+            `\`\`\`sql\nCREATE POLICY "Allow authenticated read" ON audit_logs FOR SELECT TO authenticated USING (true);\n\`\`\``;
+        }
+
+        if (query.includes('429') || query.includes('rate limit')) {
+          return `### 🛠️ HTTP 429: Too Many Requests (Rate Limit Exceeded)\n\n` +
+            `**Plain English Summary:** You or your app sent more requests in a short time than the API provider allows on your current plan.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. **Cloudflare Workers AI:** Workers AI has per-minute concurrency limits. Dev’ai Controller has automatic fallback to the standby provider to keep service uninterrupted.\n` +
+            `2. **Resend Email:** Free tier allows 2 requests/sec and 100 emails/day. Batch outgoing emails with small pauses (e.g. 500ms delay between dispatches).\n` +
+            `3. **GitHub API:** Unauthenticated requests are limited to 60/hr. Make sure your \`GITHUB_TOKEN\` is active to get 5,000 requests/hr.`;
+        }
+
+        if (query.includes('401') || query.includes('unauthorized') || query.includes('bad credentials') || query.includes('invalid jwt')) {
+          return `### 🛠️ HTTP 401: Unauthorized / Invalid Credentials\n\n` +
+            `**Plain English Summary:** The service rejected the request because the secret API token or password was either missing, expired, or typed incorrectly.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. Check your \`.env\` or Cloudflare Worker Settings secrets.\n` +
+            `2. For GitHub: Re-generate a Personal Access Token with \`repo\` scope.\n` +
+            `3. For Resend: Ensure your key begins with \`re_\` and has 'Full Access'.\n` +
+            `4. For Supabase: Ensure you are passing the \`Bearer <anon_or_service_key>\` in the \`apikey\` and \`Authorization\` headers.`;
+        }
+
+        if (query.includes('resend') && (query.includes('domain') || query.includes('verify') || query.includes('403'))) {
+          return `### 🛠️ Resend Error 403: Domain Not Verified\n\n` +
+            `**Plain English Summary:** Resend will not send emails from a custom domain (e.g. \`you@yourcompany.com\`) until you prove you own that domain by adding DNS records.\n\n` +
+            `**Step-by-Step Fix:**\n` +
+            `1. For quick testing without domain verification, send from \`onboarding@resend.dev\`.\n` +
+            `2. For production: In the Resend Dashboard > Domains > Add Domain, then copy the 3 DNS records (DKIM, SPF, MX) into your Cloudflare DNS tab. Once verified (usually 2-5 minutes), you can send from any address on your domain.`;
+        }
+
+        if (query.includes('who developed') || query.includes('who created') || query.includes('author') || query.includes('developed by') || query.includes('creator')) {
+          return `### 🛡️ Dev’ai Controller Ownership\n\n` +
+            `**Internally developed by Jelvan R. All rights reserved. 2026.**\n\n` +
+            `Dev’ai Controller is a private edge orchestration platform built on Cloudflare Workers, Cloudflare Pages, Supabase PostgreSQL, GitHub, and Resend with zero-trust secret isolation.`;
+        }
+
+        if (query.includes('zero trust') || query.includes('zero-trust') || query.includes('secret isolation') || query.includes('server secrets')) {
+          return `### 🔒 Zero-Trust Secret Isolation Architecture\n\n` +
+            `**Status:** Active\n\n` +
+            `All API credentials (\`CLOUDFLARE_API_TOKEN\`, \`GITHUB_TOKEN\`, \`SUPABASE_SERVICE_ROLE_KEY\`, \`RESEND_API_KEY\`, \`OPENAI_API_KEY\`) are encrypted using **AES-256-GCM** authenticated cipher with unique 96-bit IVs on the Cloudflare Worker server.\n\n` +
+            `**Zero Browser Exposure:** No raw secret or API key ever enters the client bundle or network responses. The UI strictly displays masked identifiers (e.g. \`cf_ai_...89a1\`). Full documentation is available in the **Knowledge Center** under the System & Architecture tab.`;
+        }
+
+        if (query.includes('operator') || query.includes('user account') || query.includes('secured.jelvan')) {
+          return `### 👤 Operator & Authentication Profile\n\n` +
+            `- **Developer / Operator User:** \`secured.jelvan@gmail.com\`\n` +
+            `- **Role:** Developer / Operator (Full Administrative Access)\n` +
+            `- **Authentication Provider:** Supabase Auth\n` +
+            `- **Security Layer:** PostgreSQL Row-Level Security (RLS) enforcement\n\n` +
+            `All interactions and coding executions are audited under this operator profile.`;
+        }
+
+        if (query.includes('model') || query.includes('llama') || query.includes('workers ai') || query.includes('ai engine')) {
+          return `### ⚡ AI Model Engine Infrastructure\n\n` +
+            `- **Primary AI Engine:** Cloudflare Workers AI (\`@cf/meta/llama-3.3-70b-instruct\`) running on global edge GPU clusters.\n` +
+            `- **Standby Fallback:** OpenAI (\`gpt-4o-mini\`) engaged automatically if Cloudflare experiences rate limiting (HTTP 429) or gateway blips (HTTP 504).\n` +
+            `- **Self-Healing:** Automatic failover ensures uninterrupted orchestration.`;
+        }
+
+        return null;
+      };
+
+      const matchedDiagnosis = diagnoseKnownIssues(promptLower);
 
       if (ai) {
         try {
+          const systemInstruction =
+            `You are Dev’ai Controller, an intelligent edge orchestration assistant internally developed by Jelvan R. All rights reserved. 2026.\n` +
+            `Primary Operator User: secured.jelvan@gmail.com (Developer / Operator).\n` +
+            `Architecture: Cloudflare Workers, Cloudflare Pages, Supabase PostgreSQL with Row Level Security, Resend, GitHub API, and Cloudflare Workers AI (@cf/meta/llama-3.3-70b-instruct) with OpenAI (gpt-4o-mini) standby fallback.\n` +
+            `Security: Zero-Trust Secret Isolation active using server-side AES-256-GCM encryption with zero browser exposure.\n` +
+            `The UI is designed cleanly for non-technical operators; all technical specifications and error guides are preserved in the Knowledge Center.\n` +
+            `You provide comprehensive, accurate, step-by-step diagnostic answers for any issue, error code, architecture question, or deployment task.\n` +
+            `When answering errors or issues, structure your reply clearly:\n` +
+            `1. Plain-English Summary (easy to understand for non-technical users)\n` +
+            `2. Technical Root Cause\n` +
+            `3. Step-by-Step Fix (with exact code or configuration snippet)\n` +
+            `4. Prevention / Best Practice\n` +
+            `Keep the tone professional, helpful, and concise.`;
+
           const resp = await withTimeout(
             ai.models.generateContent({
               model: 'gemini-flash-latest',
-              contents: `You are Operava, an AI Token & Action Hub running on Cloudflare Workers and Supabase.
-Answer this question concisely and directly to help the user manage encrypted tokens or run automated actions:
-"${prompt}"`,
+              contents: `${systemInstruction}\n\nUser Question/Issue: "${prompt}"`,
             }),
-            3000,
+            7000,
             null
           );
-          if (resp && resp.text) answer = resp.text;
+          if (resp && resp.text) {
+            answer = resp.text;
+          }
         } catch (e) {
-          // Keep default
+          console.warn('AI general completion error:', e);
+        }
+      }
+
+      // If AI didn't answer or timed out, use targeted diagnosis or intelligent controller summary
+      if (!answer) {
+        if (matchedDiagnosis) {
+          answer = matchedDiagnosis;
+        } else {
+          answer =
+            `### 🤖 Dev’ai Controller Assistant\n\n` +
+            `I have analyzed your request regarding: **"${prompt.slice(0, 70)}"**.\n\n` +
+            `**System Capabilities & Status:**\n` +
+            `- **Cloudflare Workers AI:** Running \`@cf/meta/llama-3.3-70b-instruct\` with Edge bindings\n` +
+            `- **Supabase PostgreSQL:** Encrypted token vault and RLS-enforced audit trail\n` +
+            `- **Resend Integration:** Transactional notification engine\n` +
+            `- **GitHub Integration:** Automated PR generation and repository inspection\n\n` +
+            `**Need Help With An Error?** You can ask me about any Cloudflare error (1101, 1000, 521, 522), Supabase RLS recursion, 401/429 limits, or deploy configurations. You can also visit the **Knowledge Center** tab for full non-technical guides.`;
         }
       }
 

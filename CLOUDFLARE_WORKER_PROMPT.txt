@@ -5,11 +5,11 @@
 PROMPT FOR CLOUDFLARE AI ASSISTANT IN CLOUDFLARE DASHBOARD:
 --------------------------------------------------------------------------------
 
-You are deploying the "Cloudflare Agent Hub" production worker on my Cloudflare account.
+You are deploying the "Dev’ai Controller" production worker on my Cloudflare account.
 Please configure and activate this Cloudflare Worker with the following exact specifications:
 
 1. WORKER CONFIGURATION:
-   - Worker Name: "cloudflare-agent-hub"
+   - Worker Name: "devai-controller"
    - Compatibility Date: "2026-03-01"
    - Compatibility Flags: ["nodejs_compat"]
 
@@ -35,13 +35,18 @@ Please configure and activate this Cloudflare Worker with the following exact sp
    - It exposes:
      * GET /api/health -> Edge status and colocation
      * GET /api/status -> Authoritative operational status of Cloudflare, Supabase, GitHub, Resend, and OpenAI
+     * GET /api/chat/sessions -> Chat sessions list
+     * POST /api/chat/sessions -> Create fresh chat session
+     * GET /api/chat/sessions/:id -> Session message history
+     * POST /api/chat/sessions/:id/messages -> AI Driver response generation with execution trace
+     * POST /api/chat/sessions/:id/clear -> Clear session messages
      * GET /api/deployments -> Live monitoring of Cloudflare Workers and Pages deployments
      * POST /api/deployments/trigger -> Triggers edge deployment
      * POST /api/deployments/rollback -> Instant zero-downtime rollback
      * GET /api/notifications -> Resend email, deployment, and GitHub alert feed
      * POST /api/coding/execute -> Cloudflare Workers AI coding engine (@cf/meta/llama-3.3-70b-instruct) with AST plan, surgical diff, and PR generator
      * GET /api/logs -> Supabase RLS audit records
-     * GET /api/auth/me -> Authenticated operator profile
+     * GET /api/tokens -> Encrypted token inventory
    - All CORS headers:
      * Access-Control-Allow-Origin: *
      * Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
@@ -49,9 +54,9 @@ Please configure and activate this Cloudflare Worker with the following exact sp
 
 5. VERIFICATION STEPS:
    Once deployed, run a curl request to verify:
-   curl -X GET "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/health"
-   curl -X GET "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/status"
-   curl -X POST "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/coding/execute" \
+   curl -X GET "https://devai-controller.[your-subdomain].workers.dev/api/health"
+   curl -X GET "https://devai-controller.[your-subdomain].workers.dev/api/status"
+   curl -X POST "https://devai-controller.[your-subdomain].workers.dev/api/coding/execute" \
      -H "Content-Type: application/json" \
      -d '{"prompt": "Audit and optimize Cloudflare Worker edge routing", "repo": "operava/operava-worker-core", "branch": "main"}'
 

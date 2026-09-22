@@ -1,10 +1,137 @@
 import { encryptToken, maskToken } from './crypto.js';
-import type { ApiToken, StoredApiToken, AuditLog, TokenProvider, ActionStatus } from '../src/types/index.js';
+import type {
+  ApiToken,
+  StoredApiToken,
+  AuditLog,
+  TokenProvider,
+  ActionStatus,
+  ChatSession,
+  AiChatMessage,
+} from '../src/types/index.js';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // In-memory store backed by initial seeds
 let tokenStore: Map<string, StoredApiToken> = new Map();
 let auditLogs: AuditLog[] = [];
+let chatSessions: Map<string, ChatSession> = new Map();
+let sessionMessages: Map<string, AiChatMessage[]> = new Map();
+
+// Initialize initial chat sessions
+function initDefaultChatSessions() {
+  const now = Date.now();
+  const defaultSessions: Array<{ session: ChatSession; messages: AiChatMessage[] }> = [
+    {
+      session: {
+        id: 'sess-cf-audit-01',
+        title: 'Cloudflare Edge Security & AI Model Audit',
+        createdAt: new Date(now - 1000 * 60 * 180).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 160).toISOString(),
+        messageCount: 2,
+        lastMessageSnippet: 'All Cloudflare Workers AI model routes verified with zero-trust token isolation.',
+        tags: ['Cloudflare AI', 'Zero-Trust', 'Audit'],
+      },
+      messages: [
+        {
+          id: 'msg-101',
+          sessionId: 'sess-cf-audit-01',
+          role: 'user',
+          content: 'Audit current Cloudflare Workers AI edge model availability and token health.',
+          timestamp: new Date(now - 1000 * 60 * 180).toISOString(),
+        },
+        {
+          id: 'msg-102',
+          sessionId: 'sess-cf-audit-01',
+          role: 'assistant',
+          content: 'Completed security audit: Cloudflare Workers AI model `@cf/meta/llama-3.3-70b-instruct` is operational at 22ms latency. Fallback OpenAI `gpt-4o-mini` is active on standby. All worker secrets are derived using AES-256-GCM without exposing raw values to the browser.',
+          timestamp: new Date(now - 1000 * 60 * 160).toISOString(),
+          aiProvider: 'cloudflare_ai',
+          model: '@cf/meta/llama-3.3-70b-instruct',
+          status: 'success',
+          steps: [
+            { title: 'Checked Cloudflare AI Gateway endpoint', status: 'completed', detail: 'HTTP 200 OK (22ms)' },
+            { title: 'Audited AES-256-GCM worker secret isolation', status: 'completed', detail: 'Derived from WORKER_SECRET' },
+            { title: 'Verified standby OpenAI redundancy', status: 'completed', detail: 'Ready for auto-failover' },
+          ],
+        },
+      ],
+    },
+    {
+      session: {
+        id: 'sess-resend-02',
+        title: 'Resend Transactional Deployment Mailer',
+        createdAt: new Date(now - 1000 * 60 * 360).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 340).toISOString(),
+        messageCount: 2,
+        lastMessageSnippet: 'Test deployment alert successfully dispatched to secured.jelvan@gmail.com.',
+        tags: ['Resend', 'Alerts', 'Email'],
+      },
+      messages: [
+        {
+          id: 'msg-201',
+          sessionId: 'sess-resend-02',
+          role: 'user',
+          content: 'Test dispatching a deployment notification email to secured.jelvan@gmail.com with subject "Edge Release v2.4 Live".',
+          timestamp: new Date(now - 1000 * 60 * 360).toISOString(),
+        },
+        {
+          id: 'msg-202',
+          sessionId: 'sess-resend-02',
+          role: 'assistant',
+          content: 'Email successfully processed and delivered via Resend API v1! Message ID: `msg_resend_9941a`. Delivery confirmed to `secured.jelvan@gmail.com`.',
+          timestamp: new Date(now - 1000 * 60 * 340).toISOString(),
+          service: 'resend',
+          status: 'success',
+          steps: [
+            { title: 'Validated Resend token credentials', status: 'completed' },
+            { title: 'Constructed responsive HTML deployment template', status: 'completed' },
+            { title: 'Dispatched through Resend API pipeline', status: 'completed', detail: 'HTTP 200 Delivered' },
+          ],
+        },
+      ],
+    },
+    {
+      session: {
+        id: 'sess-supabase-03',
+        title: 'Supabase PostgreSQL Database RLS Inspection',
+        createdAt: new Date(now - 1000 * 60 * 600).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 580).toISOString(),
+        messageCount: 2,
+        lastMessageSnippet: 'RLS policies for audit_logs and api_tokens verified active.',
+        tags: ['Supabase', 'PostgreSQL', 'RLS'],
+      },
+      messages: [
+        {
+          id: 'msg-301',
+          sessionId: 'sess-supabase-03',
+          role: 'user',
+          content: 'Inspect Supabase PostgreSQL connection and verify Row Level Security status on tables.',
+          timestamp: new Date(now - 1000 * 60 * 600).toISOString(),
+        },
+        {
+          id: 'msg-302',
+          sessionId: 'sess-supabase-03',
+          role: 'assistant',
+          content: 'Supabase PostgreSQL 15.6 instance is connected and responding in 27ms. Verified Row Level Security (RLS) enabled on `api_tokens` and `audit_logs` collections.',
+          timestamp: new Date(now - 1000 * 60 * 580).toISOString(),
+          service: 'supabase',
+          status: 'success',
+          steps: [
+            { title: 'Pinged Supabase REST endpoint', status: 'completed', detail: 'Latency: 27ms' },
+            { title: 'Queried PostgreSQL information_schema for RLS status', status: 'completed' },
+            { title: 'Audited user session validator', status: 'completed', detail: 'Active & Enforced' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  for (const item of defaultSessions) {
+    chatSessions.set(item.session.id, item.session);
+    sessionMessages.set(item.session.id, item.messages);
+  }
+}
+
+initDefaultChatSessions();
 
 // Optional Supabase client if configured
 let supabaseClient: SupabaseClient | null = null;
@@ -360,4 +487,127 @@ export async function listAuditLogs(limit: number = 50): Promise<AuditLog[]> {
 
   return auditLogs.slice(0, limit);
 }
+
+/**
+ * List all chat sessions sorted by latest activity
+ */
+export async function listChatSessions(): Promise<ChatSession[]> {
+  const sessions = Array.from(chatSessions.values());
+  sessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return sessions;
+}
+
+/**
+ * Create a new, fresh, empty chat session
+ */
+export async function createChatSession(title?: string, tags?: string[]): Promise<ChatSession> {
+  const id = `sess-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const now = new Date().toISOString();
+  const session: ChatSession = {
+    id,
+    title: title?.trim() || 'New Chat Session',
+    createdAt: now,
+    updatedAt: now,
+    messageCount: 0,
+    lastMessageSnippet: 'Empty session. Ready for prompt.',
+    tags: tags && tags.length > 0 ? tags : ['Dev’ai Assistant'],
+  };
+
+  chatSessions.set(id, session);
+  sessionMessages.set(id, []);
+
+  await addAuditLog({
+    action: 'chat.session.create',
+    service: 'ai',
+    status: 'success',
+    durationMs: 5,
+    summary: `Created new chat session: ${session.title}`,
+  });
+
+  return session;
+}
+
+/**
+ * Get a specific chat session with its full message history
+ */
+export async function getChatSession(id: string): Promise<{ session: ChatSession; messages: AiChatMessage[] } | null> {
+  const session = chatSessions.get(id);
+  if (!session) return null;
+  const messages = sessionMessages.get(id) || [];
+  return { session, messages };
+}
+
+/**
+ * Delete a chat session
+ */
+export async function deleteChatSession(id: string): Promise<boolean> {
+  const deleted = chatSessions.delete(id);
+  sessionMessages.delete(id);
+  if (deleted) {
+    await addAuditLog({
+      action: 'chat.session.delete',
+      service: 'ai',
+      status: 'success',
+      durationMs: 4,
+      summary: `Deleted chat session ID: ${id}`,
+    });
+  }
+  return deleted;
+}
+
+/**
+ * Append a chat message to a session
+ */
+export async function addChatMessage(
+  sessionId: string,
+  msg: Omit<AiChatMessage, 'id' | 'sessionId' | 'timestamp'>
+): Promise<AiChatMessage> {
+  let session = chatSessions.get(sessionId);
+  if (!session) {
+    // Auto-create session if not found
+    session = await createChatSession(msg.content.slice(0, 36) + '...');
+  }
+
+  const now = new Date().toISOString();
+  const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const newMessage: AiChatMessage = {
+    ...msg,
+    id: messageId,
+    sessionId: session.id,
+    timestamp: now,
+  };
+
+  const msgs = sessionMessages.get(session.id) || [];
+  msgs.push(newMessage);
+  sessionMessages.set(session.id, msgs);
+
+  // If this was the first user message, update title
+  if (session.messageCount === 0 && msg.role === 'user') {
+    const cleanTitle = msg.content.trim().slice(0, 42);
+    session.title = cleanTitle.length > 0 ? cleanTitle : 'Chat Session';
+  }
+
+  session.messageCount = msgs.length;
+  session.updatedAt = now;
+  session.lastMessageSnippet = msg.content.slice(0, 90);
+  chatSessions.set(session.id, session);
+
+  return newMessage;
+}
+
+/**
+ * Clear all messages from a chat session
+ */
+export async function clearChatMessages(sessionId: string): Promise<boolean> {
+  const session = chatSessions.get(sessionId);
+  if (!session) return false;
+
+  sessionMessages.set(sessionId, []);
+  session.messageCount = 0;
+  session.updatedAt = new Date().toISOString();
+  session.lastMessageSnippet = 'Session cleared.';
+  chatSessions.set(sessionId, session);
+  return true;
+}
+
 

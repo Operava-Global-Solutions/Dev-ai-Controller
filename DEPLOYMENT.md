@@ -1,6 +1,6 @@
-# Production Deployment Guide: Cloudflare Agent Hub
+# Production Deployment Guide: Dev’ai Controller
 
-This guide provides end-to-end instructions for deploying the **Cloudflare Agent Hub** to production on Cloudflare Workers, Cloudflare Pages, Supabase, and Resend.
+This guide provides end-to-end instructions for deploying the **Dev’ai Controller** to production on Cloudflare Workers, Cloudflare Pages, Supabase, and Resend.
 
 ---
 
@@ -45,7 +45,7 @@ Use this method if you want to deploy directly in your browser without installin
 
 2. **Create a Worker**:
    - Click **Create application** > **Create Worker**.
-   - Name the Worker: `cloudflare-agent-hub`.
+   - Name the Worker: `devai-controller`.
    - Click **Deploy**.
 
 3. **Paste Worker Code**:

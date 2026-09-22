@@ -142,22 +142,18 @@ export const StatusDashboard: React.FC<StatusDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner: Architecture & System Health */}
-      <div className="rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-r from-orange-50/70 via-white to-amber-50/50 dark:from-[#1c1815] dark:via-[#16181d] dark:to-[#1a1715] p-5 sm:p-6 shadow-xs">
+      {/* Top Banner: Architecture & System Health with Operava Gradient Accent */}
+      <div className="rounded-2xl border border-purple-200/70 dark:border-purple-900/50 bg-gradient-to-r from-orange-50/30 via-white to-purple-50/30 dark:from-[#1c181f] dark:via-[#16181d] dark:to-[#191522] p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
               <h2 className="text-lg font-semibold tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
-                Multi-Service Operational Status
+                Services Status
               </h2>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800/80">
-                Cloudflare Workers AI Core
-              </span>
             </div>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] max-w-2xl leading-relaxed">
-              Monitoring real-time health across Cloudflare, Supabase, GitHub, Resend, and OpenAI.
-              All confidential secrets remain server-side in Cloudflare configuration.
+              Live connectivity and operational status across all connected services.
             </p>
           </div>
 
@@ -167,59 +163,59 @@ export const StatusDashboard: React.FC<StatusDashboardProps> = ({
               disabled={isRefreshing}
               className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-medium bg-white dark:bg-[#20242d] text-[#1a1d24] dark:text-[#f0f3f6] border border-[#e2e4e9] dark:border-[#2e333d] hover:bg-[#f8f9fa] dark:hover:bg-[#282d38] transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
             >
-              <RefreshCw className={`h-3.5 w-3.5 text-orange-500 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Pinging Services...' : 'Refresh Status'}</span>
+              <RefreshCw className={`h-3.5 w-3.5 text-purple-600 dark:text-purple-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Checking...' : 'Refresh'}</span>
             </button>
 
             <button
               onClick={onNavigateToCoding}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#f38020] hover:bg-[#d96e14] text-white transition-all shadow-xs cursor-pointer"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 text-white transition-all shadow-xs cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Drive Coding</span>
+              <span>Coding</span>
             </button>
           </div>
         </div>
 
         {/* Quick Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 mt-5 border-t border-orange-200/50 dark:border-orange-950/40">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 mt-5 border-t border-[#f0f2f5] dark:border-[#252a35]">
           <div className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d]">
-            <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Primary AI Engine</p>
-            <p className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6] mt-0.5 truncate">
-              Workers AI (Llama 3.3 70B)
+            <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Connected Services</p>
+            <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 mt-0.5 truncate">
+              5 of 5 Online
             </p>
           </div>
 
           <div className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d]">
-            <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Fallback AI Engine</p>
-            <p className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6] mt-0.5 truncate">
-              OpenAI (gpt-4o-mini)
+            <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">System Health</p>
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
+              All Operational
             </p>
           </div>
 
           <div
             onClick={onNavigateToDeployments}
-            className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d] cursor-pointer hover:border-orange-400 transition-colors"
+            className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d] cursor-pointer hover:border-purple-400 transition-colors"
           >
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Active Deployments</p>
-              <ArrowUpRight className="h-3 w-3 text-orange-500" />
+              <ArrowUpRight className="h-3 w-3 text-purple-500" />
             </div>
             <p className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6] mt-0.5">
-              5 Edge Apps Healthy
+              5 Edge Apps
             </p>
           </div>
 
           <div
             onClick={onNavigateToNotifications}
-            className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d] cursor-pointer hover:border-orange-400 transition-colors"
+            className="p-3 rounded-xl bg-white/80 dark:bg-[#1f232c]/80 border border-[#e2e4e9] dark:border-[#2e333d] cursor-pointer hover:border-purple-400 transition-colors"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Notifications Pipeline</p>
-              <ArrowUpRight className="h-3 w-3 text-orange-500" />
+              <p className="text-[11px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Notifications</p>
+              <ArrowUpRight className="h-3 w-3 text-purple-500" />
             </div>
             <p className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6] mt-0.5">
-              Resend Verified • 100%
+              Active & Verified
             </p>
           </div>
         </div>
@@ -265,7 +261,7 @@ export const StatusDashboard: React.FC<StatusDashboardProps> = ({
             <div className="mt-4 pt-3 border-t border-[#f0f2f5] dark:border-[#232834] flex items-center justify-between text-[11px]">
               <div className="flex items-center space-x-1.5 text-[#5f6368] dark:text-[#9aa0a6]">
                 <Clock className="h-3 w-3 text-orange-500" />
-                <span>P95 Latency:</span>
+                <span>Response:</span>
                 <span className="font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">{service.latencyMs}ms</span>
               </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#f4f5f8] dark:bg-[#202530] text-[#5f6368] dark:text-[#9aa0a6]">
@@ -286,30 +282,6 @@ export const StatusDashboard: React.FC<StatusDashboardProps> = ({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Zero-Trust Secrets Isolation Architecture Card */}
-      <div className="rounded-2xl border border-[#e2e4e9] dark:border-[#252a35] bg-white dark:bg-[#161a22] p-5 shadow-2xs">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#1a1d24] dark:text-[#f0f3f6]">
-              Cloudflare Server-Side Secret Isolation Architecture
-            </h3>
-          </div>
-          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-            Zero Browser Exposure
-          </span>
-        </div>
-
-        <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] leading-relaxed">
-          Following security mandates, no confidential API keys, tokens, or infrastructure credentials exist on the UI.
-          All credentials (<code className="text-orange-600 dark:text-orange-400 font-mono">CLOUDFLARE_API_TOKEN</code>,{' '}
-          <code className="text-purple-600 dark:text-purple-400 font-mono">GITHUB_TOKEN</code>,{' '}
-          <code className="text-emerald-600 dark:text-emerald-400 font-mono">SUPABASE_SERVICE_ROLE_KEY</code>,{' '}
-          <code className="text-cyan-600 dark:text-cyan-400 font-mono">RESEND_API_KEY</code>,{' '}
-          <code className="text-blue-600 dark:text-blue-400 font-mono">OPENAI_API_KEY</code>) are securely bound on Cloudflare Worker runtime.
-        </p>
       </div>
     </div>
   );

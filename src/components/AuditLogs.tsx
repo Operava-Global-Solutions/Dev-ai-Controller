@@ -56,14 +56,11 @@ export const AuditLogs: React.FC<AuditLogsProps> = ({ logs, onRefresh }) => {
         <div>
           <div className="flex items-center space-x-2">
             <h2 className="text-xl font-bold tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
-              Immutable Audit Trail
+              Audit Trail
             </h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-              Supabase RLS Protected
-            </span>
           </div>
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
-            Immutable telemetry records of all Cloudflare Workers executions, deployments, and AI coding agent commits.
+            Log of system operations, deployments, and automated actions.
           </p>
         </div>
 

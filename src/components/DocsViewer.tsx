@@ -60,10 +60,10 @@ export const DocsViewer: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-[#050505] dark:text-[#f5f5f7]">
-            Official Context Docs (llms.txt)
+            Documentation
           </h2>
           <p className="text-xs text-[#65676b] dark:text-[#b0b3b8] mt-0.5">
-            Real system context files from Cloudflare Workers AI, Workers Core, Supabase, Resend, and GitHub.
+            Reference documentation and system context files.
           </p>
         </div>
 
