@@ -1,0 +1,163 @@
+import React, { useState } from 'react';
+import {
+  PanelLeft,
+  ShieldCheck,
+  Zap,
+  Sparkles,
+  Sun,
+  Moon,
+  Database,
+  GitBranch,
+  Globe,
+  Bell,
+  Cpu,
+} from 'lucide-react';
+import type { SupabaseAuthUser } from '../types/index.js';
+
+interface HeaderProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onToggleSidebar: () => void;
+  isSidebarOpen: boolean;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
+  currentUser: SupabaseAuthUser;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  activeTab,
+  setActiveTab,
+  onToggleSidebar,
+  isSidebarOpen,
+  isDarkMode,
+  onToggleDarkMode,
+  currentUser,
+}) => {
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  return (
+    <header className="h-14 border-b border-[#e2e4e9] dark:border-[#252a35] bg-white/95 dark:bg-[#12161f]/95 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-3 sm:px-5">
+      {/* Left side: Hamburger toggle + App Brand */}
+      <div className="flex items-center space-x-3">
+        <button
+          onClick={onToggleSidebar}
+          className="p-2 rounded-xl text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f0f2f5] dark:hover:bg-[#202530] transition-colors cursor-pointer"
+          title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
+
+        <div
+          onClick={() => setActiveTab('status')}
+          className="flex items-center space-x-2.5 cursor-pointer"
+        >
+          {/* Cloudflare Orange Logo */}
+          <div className="h-7 w-7 rounded-lg bg-[#f38020] flex items-center justify-center shadow-xs">
+            <Zap className="h-4 w-4 text-white fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-1.5">
+              <span className="font-bold text-sm tracking-tight text-[#1a1d24] dark:text-[#f0f3f6]">
+                Cloudflare Agent Hub
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 font-medium">
+                Workers AI
+              </span>
+            </div>
+            <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] hidden sm:block">
+              Multi-Service Orchestration & Operational Status
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Middle: Active AI Engine Pill */}
+      <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-[#f4f5f8] dark:bg-[#1a1e27] border border-[#e2e4e9] dark:border-[#2c3240] text-xs">
+        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="font-medium text-[#1a1d24] dark:text-[#f0f3f6]">Cloudflare AI Core:</span>
+        <span className="font-mono text-orange-600 dark:text-orange-400">@cf/llama-3.3-70b</span>
+        <span className="text-[#80868b]">•</span>
+        <span className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">OpenAI Standby</span>
+      </div>
+
+      {/* Right side: Actions & Supabase Auth User */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Dark mode toggle */}
+        <button
+          onClick={onToggleDarkMode}
+          className="p-2 rounded-xl text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f0f2f5] dark:hover:bg-[#202530] transition-colors cursor-pointer"
+          title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDarkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+        </button>
+
+        {/* Supabase Authenticated User Profile Pill */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#f4f5f8] dark:bg-[#1a1e27] hover:bg-[#ebedf1] dark:hover:bg-[#222834] transition-colors border border-[#e2e4e9] dark:border-[#2c3240] cursor-pointer"
+          >
+            <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-2xs">
+              {currentUser.name ? currentUser.name[0].toUpperCase() : 'J'}
+            </div>
+            <div className="text-left hidden lg:block">
+              <div className="flex items-center space-x-1.5">
+                <span className="text-xs font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
+                  {currentUser.name}
+                </span>
+                <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                  {currentUser.role}
+                </span>
+              </div>
+              <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-[130px]">
+                {currentUser.email}
+              </p>
+            </div>
+          </button>
+
+          {/* User Details Dropdown */}
+          {showUserDropdown && (
+            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#181d26] border border-[#e2e4e9] dark:border-[#2e333d] shadow-lg p-4 z-50 text-xs">
+              <div className="flex items-center space-x-3 pb-3 border-b border-[#f0f2f5] dark:border-[#252a35]">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                  {currentUser.name ? currentUser.name[0].toUpperCase() : 'J'}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-[#1a1d24] dark:text-[#f0f3f6]">
+                    {currentUser.name}
+                  </h4>
+                  <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">
+                    {currentUser.email}
+                  </p>
+                  <span className="inline-block mt-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                    Role: {currentUser.role}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-3 space-y-2 text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">
+                <div className="flex items-center justify-between">
+                  <span>Auth Provider:</span>
+                  <span className="font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">Supabase Auth</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Session Status:</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1" />
+                    Verified Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Server Secrets:</span>
+                  <span className="font-mono text-orange-600 dark:text-orange-400 font-semibold">
+                    Cloudflare Worker Isolation
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};

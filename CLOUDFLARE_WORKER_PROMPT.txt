@@ -1,0 +1,59 @@
+# CLOUDFLARE AI ASSISTANT / CLOUDFLARE WORKERS AI DEPLOYMENT PROMPT
+# Copy and paste the entire block below into the Cloudflare Dashboard AI Assistant / Cloudflare Workers AI Prompt.
+
+--------------------------------------------------------------------------------
+PROMPT FOR CLOUDFLARE AI ASSISTANT IN CLOUDFLARE DASHBOARD:
+--------------------------------------------------------------------------------
+
+You are deploying the "Cloudflare Agent Hub" production worker on my Cloudflare account.
+Please configure and activate this Cloudflare Worker with the following exact specifications:
+
+1. WORKER CONFIGURATION:
+   - Worker Name: "cloudflare-agent-hub"
+   - Compatibility Date: "2026-03-01"
+   - Compatibility Flags: ["nodejs_compat"]
+
+2. ATTACH CLOUDFLARE WORKERS AI BINDING:
+   - Variable name: "AI"
+   - Model capability: Cloudflare Workers AI (@cf/meta/llama-3.3-70b-instruct)
+   - In wrangler.toml:
+     [ai]
+     binding = "AI"
+
+3. ENVIRONMENT SECRETS (Configure in Settings -> Variables and Secrets as Encrypted Secrets):
+   - CLOUDFLARE_ACCOUNT_ID: [Your Cloudflare Account ID]
+   - CLOUDFLARE_API_TOKEN: [Cloudflare API Token with Workers AI and Workers Scripts Edit permission]
+   - SUPABASE_URL: [Your Supabase project URL, e.g., https://xyzcompany.supabase.co]
+   - SUPABASE_SERVICE_ROLE_KEY: [Your Supabase secret service-role key for backend RLS audit storage]
+   - GITHUB_TOKEN: [GitHub Personal Access Token with 'repo', 'read:user', and 'workflow' scopes]
+   - RESEND_API_KEY: [Resend API key starting with 're_']
+   - OPENAI_API_KEY: [Optional fallback key for gpt-4o-mini standby redundancy]
+   - WORKER_SECRET: [32-character random string for AES-256-GCM token encryption]
+
+4. IMPLEMENTATION SCRIPT:
+   Use the exact ES Module code from `cloudflare-worker.js` (provided in the repository):
+   - It exposes:
+     * GET /api/health -> Edge status and colocation
+     * GET /api/status -> Authoritative operational status of Cloudflare, Supabase, GitHub, Resend, and OpenAI
+     * GET /api/deployments -> Live monitoring of Cloudflare Workers and Pages deployments
+     * POST /api/deployments/trigger -> Triggers edge deployment
+     * POST /api/deployments/rollback -> Instant zero-downtime rollback
+     * GET /api/notifications -> Resend email, deployment, and GitHub alert feed
+     * POST /api/coding/execute -> Cloudflare Workers AI coding engine (@cf/meta/llama-3.3-70b-instruct) with AST plan, surgical diff, and PR generator
+     * GET /api/logs -> Supabase RLS audit records
+     * GET /api/auth/me -> Authenticated operator profile
+   - All CORS headers:
+     * Access-Control-Allow-Origin: *
+     * Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+     * Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+
+5. VERIFICATION STEPS:
+   Once deployed, run a curl request to verify:
+   curl -X GET "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/health"
+   curl -X GET "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/status"
+   curl -X POST "https://cloudflare-agent-hub.[your-subdomain].workers.dev/api/coding/execute" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "Audit and optimize Cloudflare Worker edge routing", "repo": "operava/operava-worker-core", "branch": "main"}'
+
+Confirm deployment across all Cloudflare global edge data centers.
+--------------------------------------------------------------------------------

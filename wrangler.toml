@@ -1,0 +1,21 @@
+name = "cloudflare-agent-hub"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Workers AI Native Binding
+[ai]
+binding = "AI"
+
+# Static Assets Configuration for React Vite SPA
+[site]
+bucket = "./dist"
+
+# Observability & Logging
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Triggers / Crons (Optional: scheduled health check every 15 minutes)
+[triggers]
+crons = ["*/15 * * * *"]

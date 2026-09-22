@@ -1,0 +1,35 @@
+<!doctype html>
+<html class="light antialiased" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2" />
+    <title>Cloudflare Agent Hub</title>
+    <meta name="description" content="Cloudflare Workers AI coding agent and operational dashboard monitoring Resend, Supabase, GitHub, Cloudflare, and OpenAI status, deployed applications, and notifications." />
+    <meta property="og:title" content="Cloudflare Agent Hub" />
+    <meta property="og:description" content="Cloudflare Workers AI coding agent and operational dashboard monitoring Resend, Supabase, GitHub, Cloudflare, and OpenAI status, deployed applications, and notifications." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F38020'><path d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z'/></svg>" />
+    <script>
+      (function() {
+        try {
+          var d = document.documentElement;
+          var s = localStorage.getItem("hub_theme");
+          var m = window.matchMedia("(prefers-color-scheme: dark)");
+          if (s === "dark" || (!s && m.matches)) {
+            d.classList.add("dark");
+          } else {
+            d.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-[#f8f9fa] dark:bg-[#0f1117] text-[#1a1d24] dark:text-[#f0f3f6] antialiased selection:bg-[#f38020] selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+

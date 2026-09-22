@@ -1,0 +1,6 @@
+{
+  "name": "Cloudflare Agent Hub",
+  "description": "Cloudflare Workers AI coding agent and operational dashboard monitoring Resend, Supabase, GitHub, Cloudflare, and OpenAI status, deployed applications, and notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
