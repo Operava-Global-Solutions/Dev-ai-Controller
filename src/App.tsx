@@ -13,6 +13,7 @@ import { ChatHistory } from './components/ChatHistory.js';
 import { KnowledgeCenter } from './components/KnowledgeCenter.js';
 import { WorkerAgent } from './components/WorkerAgent.js';
 import { AgentsPlatform } from './components/AgentsPlatform.js';
+import { BreadcrumbNav } from './components/BreadcrumbNav.js';
 import { AdminProtectiveWrapper } from './components/AdminProtectiveWrapper.js';
 import type {
   ServiceStatusInfo,
@@ -350,6 +351,14 @@ export default function App() {
                 activeTab === 'chat' ? 'flex-1 flex flex-col h-full min-h-0' : ''
               }`}
             >
+              {/* Breadcrumb Navigation Trail */}
+              <BreadcrumbNav
+                activeTab={activeTab}
+                onNavigate={setActiveTab}
+                selectedChatSessionId={selectedChatSessionId}
+                onClearChatSession={() => setSelectedChatSessionId(null)}
+              />
+
               {activeTab === 'agents' && <AgentsPlatform />}
 
               {activeTab === 'status' && (

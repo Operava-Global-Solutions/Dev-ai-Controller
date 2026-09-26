@@ -1,7 +1,8 @@
 # ⚡ Dev’ai Controller — General AI Agent Platform
+# 7-Step Canonical Autonomous Lifecycle & Governance Standard
 
 > **Complete Architecture, Multi-Agent Orchestration, Automations Engine, Tool Registry (MCP), and Cloudflare Deployment Specification**  
-> **Version**: 1.0 • **Deployment Target**: GitHub + Cloudflare • **Primary AI**: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) • **Email Engine**: Resend API
+> **Version**: 2.5 • **Deployment Target**: GitHub + Cloudflare • **Primary AI**: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) • **Email Engine**: Resend API
 
 ---
 
@@ -52,13 +53,16 @@
               Needs Approval           Safe Answer
                     |
                     v
-               Approval
+               Approval Gate
                     |
                     v
-               Execution
+                Execution
                     |
                     v
-              Audit / Logs
+             Outcome Verification
+                    |
+                    v
+             Audit Log (SHA-256)
 ```
 
 ### 🏛️ The Core Law of the Platform
@@ -73,19 +77,35 @@
 
 ---
 
-## 🧭 2. AGENTS Workspace & Navigation
+## 🛡️ 2. The 7-Step Canonical Autonomous Lifecycle & Governance Standard
+
+All autonomous workflows and platform agents strictly adhere to this sequential 7-stage governance lifecycle:
+
+| Step | Phase | Canonical Name | Invariants & Operational Rules |
+| :---: | :---: | :--- | :--- |
+| **1** | `understand_request` | **Understand the Request** | Validates tenant boundary, authenticates session, strips prompt injections, and extracts core operational intent into structured parameter contracts. |
+| **2** | `build_executive_plan` | **Build the Executive Plan** | Formulates deterministic dependency DAG, maps required tools from Tool Registry, assesses permission risk levels, and calculates SLA latency budget. |
+| **3** | `retrieve_knowledge_tools` | **Retrieve Knowledge & Prepare Tool Calls** | Dispatches semantic queries to Cloudflare Vectorize, binds attached Title IDs (e.g. `monthly-client-email-v1`), and synthesizes pre-validated MCP tool inputs. |
+| **4** | `approval_gate` | **Consequential Action Approval Gate** | Evaluates side-effects. Safe read queries bypass automatically; destructive, mutative, or external side-effects halt for explicit operator token clearance. |
+| **5** | `execute_action` | **Execute Approved Action** | Dispatches payloads through authorized MCP and Cloudflare tool providers with retry circuits and exponential backoffs. |
+| **6** | `verify_outcome` | **Verify Outcome & Compare Resources** | Compares actual returned outputs with expected resource schemas. Asserts zero drift and strict conformance to output contracts. |
+| **7** | `audit_log` | **Audit Log & Telemetry** | Records every step, action result, verification outcome, and approval token in an immutable ledger with SHA-256 cryptographic integrity hash. |
+
+---
+
+## 🧭 3. AGENTS Workspace & Navigation
 
 The platform features an **AGENTS** workspace structured into three integrated modules:
 
 | Module | Purpose | Features |
 | :--- | :--- | :--- |
-| **1. Automations Engine** | Natural-Language Workflow Creation & Lifecycle Management | 9 status tabs (Working, Draft, Pending Approval, Scheduled, Active, Paused, Completed, Failed, Inactive), Natural-Language parser, Attached Knowledge with Title IDs, Validation Contract, Approval Preview modal (`[CANCEL]` vs `[APPROVE]`), and Execution Logs. |
-| **2. Chat & Multi-Agent** | Autonomous Multi-Agent Workspace | Agent selector (General, Developer, Knowledge, Customer Service, Design, Custom), Connected MCP Servers (Knowledge, GitHub, Figma, Resend, Cloudflare), Agent-to-Agent delegation (e.g. General -> Design -> Figma MCP -> Result). |
+| **1. Automations Engine** | Natural-Language Workflow Creation & Lifecycle Management | 9 status tabs (Working, Draft, Pending Approval, Scheduled, Active, Paused, Completed, Failed, Inactive), Natural-Language parser, Attached Knowledge with Title IDs, 5-point Validation Contract, Approval Preview modal (`[CANCEL]` vs `[APPROVE]`), and Execution Logs. |
+| **2. Chat & Multi-Agent** | Autonomous Multi-Agent Workspace | Agent selector (General, Developer, Knowledge, Customer Service, Design, Custom), Connected MCP Servers (Knowledge, GitHub, Figma, Resend, Cloudflare), Agent-to-Agent delegation (e.g. General -> Design -> Figma MCP -> Result), 7-step simulator. |
 | **3. Agent Worker & Architecture** | Cloudflare Edge Runtime & Embeddable Widget | Visual blueprint of Cloudflare bindings (`[ai]`, `[[d1_databases]]`, `[[r2_buckets]]`, `[[vectorize]]`, `[[kv_namespaces]]`, `[durable_objects]`), Resend pipeline, and Embeddable Customer Service Widget (`/widget.js`). |
 
 ---
 
-## ☁️ 3. Cloudflare Edge Architecture & Bindings
+## ☁️ 4. Cloudflare Edge Architecture & Bindings
 
 The production runtime is deployed as a standalone Cloudflare Worker (`cloudflare-worker.js`) executing across 330+ edge locations in V8 isolates without cold starts.
 
@@ -147,7 +167,7 @@ crons = ["*/15 * * * *"]
 // Native Cloudflare Workers AI execution
 const aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct', {
   messages: [
-    { role: 'system', content: 'You are the General Agent. Plan, ground in facts, and invoke tools.' },
+    { role: 'system', content: 'You are the General Agent. Plan, ground in facts, and invoke tools following the 7-step canonical governance standard.' },
     { role: 'user', content: prompt }
   ],
   max_tokens: 1024
@@ -156,7 +176,7 @@ const aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct', {
 
 ---
 
-## ✉️ 4. Resend Transactional Email Engine
+## ✉️ 5. Resend Transactional Email Engine
 
 Email scheduling and delivery is powered by the **Resend API v1** integration:
 
@@ -176,7 +196,7 @@ Email scheduling and delivery is powered by the **Resend API v1** integration:
 
 ---
 
-## 🐙 5. GitHub Integration & DevOps Pipeline
+## 🐙 6. GitHub Integration & DevOps Pipeline
 
 GitHub serves as the **authoritative source-of-truth repository**:
 
@@ -190,7 +210,7 @@ GitHub serves as the **authoritative source-of-truth repository**:
 
 ---
 
-## 🤖 6. Multi-Agent Registry & Agent-to-Agent Flow
+## 🤖 7. Multi-Agent Registry
 
 Agents are tenant-scoped and restricted by explicit permissions. **The model itself is never treated as the authorization layer.**
 
@@ -203,14 +223,9 @@ Agents are tenant-scoped and restricted by explicit permissions. **The model its
 | **Design Agent** | `agent-design-01` | Figma MCP token extractor and component specification verifier | `figma.read`, `figma.create` |
 | **Custom Agent** | `agent-custom-01` | Configurable multi-step webhook ingestion and database reconciliation | `cloudflare.read`, `email.schedule` |
 
-### Agent-to-Agent Communication Flow:
-```
-Main Agent  -->  Design Agent  -->  Figma MCP  -->  Design Tokens  -->  Result  -->  Main Agent
-```
-
 ---
 
-## ⚡ 7. Automations Engine & Consequential Action Approvals
+## ⚡ 8. Automations Engine & Consequential Action Approvals
 
 ### Natural-Language Automation Example:
 1. **User input**: *"I want to schedule an email on 31."*
@@ -241,24 +256,28 @@ Main Agent  -->  Design Agent  -->  Figma MCP  -->  Design Tokens  -->  Result  
 
 ---
 
-## 💬 8. Embeddable Customer Service AI Widget
+## 💬 9. Embeddable Customer Service AI Widget
 
 Provides an isolated, drop-in customer service chat widget for any external website:
 
 ```html
-<script src="https://controller.operava.com/widget.js" data-tenant="tenant_prod_edge_001" data-agent="agent-customer-01" async></script>
+<script src="https://devai-controller.<your-subdomain>.workers.dev/widget.js" data-tenant="tenant_prod_edge_001" data-agent="agent-customer-01" async></script>
 ```
 
 - **Zero Privilege Leakage**: Customer AI only has `knowledge.read` permissions and can never access GitHub, Cloudflare, or email sending tools.
-- **Human Escalation**: If response confidence falls below 0.85, the inquiry is forwarded to an engineering lead ticket instead of inventing an answer.
+- **Grounded Factuality**: Answers strictly from attached public knowledge documents without disclosing backend credentials.
 
 ---
 
-## 📡 9. Complete REST API Catalog (`/v1/*` Namespace)
+## 📡 10. Complete REST API Catalog (`/v1/*` & `/api/*`)
 
-### Agent & Tool Endpoints
+### Agent & 7-Step Lifecycle Endpoints
 - `GET /v1/agents` — List authorized agents with permissions and enabled tools.
 - `GET /v1/agents/:id` — Retrieve specific agent profile and system instructions.
+- `GET /v1/agents/:id/flow` — Retrieve the 7-step canonical execution structure flow.
+- `GET /v1/agents/:id/knowledge` — Retrieve knowledge references attached to agent.
+- `GET /v1/agents/:id/compatible-knowledge` — Query compatible knowledge repository items.
+- `POST /v1/agents/:id/simulate-flow` — Execute the 7-step canonical lifecycle simulation with verification and SHA-256 hash.
 - `GET /v1/tools` — Controlled Tool Registry with input/output schemas and risk levels.
 - `GET /v1/mcp` — List connected Model Context Protocol (MCP) servers.
 
@@ -269,32 +288,42 @@ Provides an isolated, drop-in customer service chat widget for any external webs
 ### Automations & Approval Endpoints
 - `GET /v1/automations` — List automations (supports `?status=SCHEDULED` filter).
 - `GET /v1/automations/:id` — Retrieve automation details and workflow sequence.
-- `POST /v1/automations/parse` — Natural-language interpreter and validation check contract.
+- `POST /v1/automations/parse` — Natural-language interpreter and 5-point validation contract.
 - `POST /v1/automations/:id/approve` — Consequential Action Approval Gate (activates schedule).
 - `POST /v1/automations/:id/cancel` — Cancel proposed automation.
 - `POST /v1/automations/:id/run` — Immediate execution ("Run Now").
-- `GET /v1/executions` — Immutable execution audit log stream.
+- `GET /v1/executions` — Immutable execution audit log stream with approval tokens and cryptographic hashes.
 
 ### Customer Service Widget Endpoints
 - `GET /widget.js` — Client JavaScript bundle for public site integration.
 - `GET /v1/widget/config` — Retrieve tenant widget styling and greeting settings.
 - `POST /v1/widget/chat` — Public customer inquiry endpoint grounded in authorized knowledge.
 
+### System & Operations Endpoints
+- `GET /api/health` — Edge status, airport colocation, and active Cloudflare bindings.
+- `GET /api/status` — Multi-service operational monitor (Cloudflare, Supabase, GitHub, Resend).
+- `GET /api/deployments` — Deployed edge applications monitoring.
+- `POST /api/deployments/trigger` — Trigger deployment.
+- `POST /api/deployments/rollback` — Instant zero-downtime rollback.
+- `GET /api/notifications` — Resend email, deployment, and GitHub alert feed.
+- `POST /api/coding/execute` — Cloudflare Workers AI coding engine producing AST patches.
+
 ---
 
-## 🔒 10. Security & Zero-Trust Secrets Isolation
+## 🔒 11. Security & Zero-Trust Secrets Isolation
 
-1. **Zero Browser Exposure**: API tokens (`CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `OPENAI_API_KEY`) are stored in server-side environment variables and encrypted using `AES-256-GCM` with 96-bit unique IVs.
+1. **Zero Browser Exposure**: API tokens (`CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ADMIN_PASSWORD`) are stored in server-side environment variables and encrypted using `AES-256-GCM` with 96-bit unique IVs.
 2. **Untrusted Uploads**: Ingested files are treated as untrusted data, never as system instructions.
 3. **Prompt Injection Defense**:
    ```
    SYSTEM RULES  >  SECURITY POLICY  >  USER PERMISSIONS  >  TOOL PERMISSIONS  >  KNOWLEDGE  >  USER CONTENT
    ```
 4. **Least-Privilege Token Scoping**: Each agent receives only the tools explicitly granted in its permission array.
+5. **Cryptographic Verification**: Every simulation and execution receipt is sealed with an immutable SHA-256 hash.
 
 ---
 
-## 🚀 11. Local Development & Deployment
+## 🚀 12. Local Development & Deployment
 
 ### Prerequisites
 - Node.js 20+
@@ -332,7 +361,7 @@ npm run lint
 npm run build
 ```
 
-### 5. Deploy to Cloudflare
+### 5. Deploy to Cloudflare Edge
 ```bash
 npx wrangler deploy
 ```

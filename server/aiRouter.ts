@@ -263,7 +263,7 @@ export async function executeAiAction(
     try {
       const response = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: `You are the AI Action Router for Dev’ai Controller.
 Analyze the user request and map it to an execution tool ONLY if the user is commanding an operational action:
 1. "cloudflare.status_check" (parameters: {})
@@ -1074,7 +1074,7 @@ Return ONLY valid JSON matching this exact format:
 
           const resp = await withTimeout(
             ai.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model: 'gemini-3.8-flash',
               contents: `${systemInstruction}\n\nUser Question/Issue: "${prompt}"`,
             }),
             7000,

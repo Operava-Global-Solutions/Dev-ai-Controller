@@ -34,7 +34,9 @@ import {
   Sliders,
   Maximize2,
   Trash2,
+  Workflow,
 } from 'lucide-react';
+import { AgentKnowledgeFlows } from './AgentKnowledgeFlows.js';
 import type {
   PlatformAgent,
   AgentRoleType,
@@ -50,7 +52,7 @@ import type {
 
 export const AgentsPlatform: React.FC = () => {
   // Navigation tabs within AGENTS
-  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'automations' | 'architecture'>('automations');
+  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'automations' | 'architecture' | 'flows'>('flows');
 
   // Agent Chat State
   const [agents, setAgents] = useState<PlatformAgent[]>([]);
@@ -378,6 +380,21 @@ export const AgentsPlatform: React.FC = () => {
 
         {/* Sub-Navigation Tabs */}
         <div className="inline-flex p-1 rounded-2xl bg-[#f0f2f5] dark:bg-[#181c24] border border-[#e2e4e9] dark:border-[#282e3c]">
+          <button
+            onClick={() => setActiveSubTab('flows')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center space-x-2 ${
+              activeSubTab === 'flows'
+                ? 'bg-white dark:bg-[#222836] text-[#1a1d24] dark:text-[#f0f3f6] shadow-xs'
+                : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-[#1a1d24] dark:hover:text-[#f0f3f6]'
+            }`}
+          >
+            <Workflow className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+            <span>Knowledge & Structure Flows</span>
+            <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-mono">
+              6
+            </span>
+          </button>
+
           <button
             onClick={() => setActiveSubTab('automations')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center space-x-2 ${
@@ -848,6 +865,32 @@ export const AgentsPlatform: React.FC = () => {
                       </div>
                     ))}
                   </div>
+
+                  {/* 7-Step Governance Telemetry Badges */}
+                  {(log.approvalId || log.canonicalVerification || log.auditHash) && (
+                    <div className="pt-2 border-t border-[#e2e4e9] dark:border-[#282e3c] grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] font-mono">
+                      {log.approvalId && (
+                        <div className="p-1.5 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200">
+                          <span className="font-bold block">[Step 4] Approval ID:</span>
+                          <span className="truncate block">{log.approvalId}</span>
+                        </div>
+                      )}
+                      {log.canonicalVerification && (
+                        <div className="p-1.5 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200">
+                          <span className="font-bold block">[Step 6] Verification:</span>
+                          <span className="truncate block">
+                            {log.canonicalVerification.verified ? '✓ Zero Drift Asserted' : 'Drift Detected'}
+                          </span>
+                        </div>
+                      )}
+                      {log.auditHash && (
+                        <div className="p-1.5 rounded bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-800 dark:text-purple-200">
+                          <span className="font-bold block">[Step 7] SHA-256 Hash:</span>
+                          <span className="truncate block">{log.auditHash.slice(0, 16)}...</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1194,6 +1237,13 @@ export const AgentsPlatform: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ============================================================
+          TAB 4: AGENT KNOWLEDGE & STRUCTURE FLOWS
+          ============================================================ */}
+      {activeSubTab === 'flows' && (
+        <AgentKnowledgeFlows agents={agents} onRefreshAgents={fetchInitialData} />
       )}
 
       {/* ============================================================
