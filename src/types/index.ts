@@ -268,6 +268,53 @@ export type AgentRoleType =
   | 'design'
   | 'custom';
 
+export interface AgentKnowledgeReference {
+  titleId: string;
+  title: string;
+  category: 'architecture' | 'policy' | 'specs' | 'branding' | 'template' | 'guidelines' | 'security' | 'faq';
+  purpose: string;
+  required: boolean;
+  referenceUri?: string;
+  compatibilityRole?: 'primary' | 'context' | 'validator' | 'fallback';
+  format?: 'HTML' | 'Markdown' | 'Text' | 'JSON' | 'Template';
+}
+
+export type CanonicalLifecyclePhase =
+  | 'understand_request'
+  | 'build_executive_plan'
+  | 'retrieve_knowledge_prepare_tool'
+  | 'approval_gate'
+  | 'execute_approved_action'
+  | 'verify_outcome_compare_resources'
+  | 'audit_log_telemetry';
+
+export interface AgentStructureStage {
+  order: number;
+  canonicalStepNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  canonicalPhase: CanonicalLifecyclePhase;
+  id: string;
+  name: string;
+  description: string;
+  stageType: 'ingress' | 'reasoning' | 'validation' | 'execution' | 'gate' | 'egress';
+  toolDependencies: string[];
+  inputContract: string;
+  outputContract: string;
+  validationCheck: string;
+  expectedResourcesCheck?: string;
+  fallbackAction: string;
+  requiresApproval?: boolean;
+}
+
+export interface AgentStructureFlow {
+  version: string;
+  canonicalModel: '7_STEP_EXECUTIVE_LIFECYCLE';
+  entryTrigger: string;
+  stages: AgentStructureStage[];
+  errorBoundary: string;
+  slaTargetMs: number;
+  outputFormat: string;
+}
+
 export interface PlatformAgent {
   id: string;
   name: string;
@@ -281,6 +328,12 @@ export interface PlatformAgent {
   avatarIcon: string;
   status: 'active' | 'standby' | 'restricted';
   isExternal?: boolean;
+  knowledgeReferences?: AgentKnowledgeReference[];
+  structureFlow?: AgentStructureFlow;
+  compatibleChannels?: string[];
+  compatibleAgents?: string[];
+  supportedInputFormats?: string[];
+  fallbackChain?: string;
 }
 
 export type ToolRiskLevel = 'read' | 'write' | 'external_side_effect' | 'high_impact';
@@ -341,6 +394,14 @@ export interface AttachedKnowledgeItem {
   summary?: string;
   content?: string;
   updatedAt: string;
+  category?: 'architecture' | 'policy' | 'specs' | 'branding' | 'template' | 'guidelines' | 'security' | 'faq';
+  compatibleAgents?: Array<AgentRoleType | '*'>;
+  compatibleChannels?: Array<'webchat' | 'whatsapp' | 'messenger' | 'email' | 'github' | 'api' | 'cron' | '*'>;
+  referenceUri?: string;
+  schemaVersion?: string;
+  tags?: string[];
+  variablesRequired?: string[];
+  compatibilityRating?: number; // percentage (e.g. 100)
 }
 
 export interface EmailAutomationPayload {
@@ -424,6 +485,13 @@ export interface AutomationExecutionLog {
     resultSummary: string;
   }>;
   approvalId?: string;
+  canonicalVerification?: {
+    verified: boolean;
+    expectedResourcesSummary: string;
+    actualResourcesSummary: string;
+    driftDetected: boolean;
+  };
+  auditHash?: string;
   error?: string;
 }
 

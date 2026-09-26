@@ -1,10 +1,11 @@
-# Production Deployment Guide: Dev’ai Controller
+# 🌐 Production Deployment Guide: Dev’ai Controller
+# Specification Version: 2.0 (7-Step Canonical Autonomous Lifecycle & Governance Standard)
 
 This guide provides end-to-end instructions for deploying the **Dev’ai Controller** to production on Cloudflare Workers, Cloudflare Pages, Supabase, and Resend.
 
 ---
 
-## Architecture Overview
+## 🏛️ System Architecture
 
 ```
 +---------------------------------------------------------------------------------+
@@ -12,7 +13,7 @@ This guide provides end-to-end instructions for deploying the **Dev’ai Control
 |                                                                                 |
 |   +---------------------------------+     +---------------------------------+   |
 |   |         Cloudflare Pages        |     |        Cloudflare Worker        |   |
-|   |  (React 18 + Tailwind UI SPA)   |     |    (Edge APIs & Routing Engine) |   |
+|   |  (React 18 + Tailwind UI SPA)   |     |  (7-Step Governance & API)      |   |
 |   +----------------+----------------+     +----------------+----------------+   |
 |                    |                                       |                    |
 |                    +------------------+--------------------+                    |
@@ -36,119 +37,117 @@ This guide provides end-to-end instructions for deploying the **Dev’ai Control
 
 ---
 
-## Method 1: Cloudflare Dashboard (Direct Web Editor Paste)
+## 🚀 Deployment Methods
 
-Use this method if you want to deploy directly in your browser without installing CLI tools:
+### Method 1: Cloudflare AI Assistant Prompt (Recommended Instant Setup)
+
+If you are using the Cloudflare Dashboard AI Assistant / Cloudflare Workers AI Builder:
+
+1. Open `CLOUDFLARE_WORKER_PROMPT.txt` in the root of this repository.
+2. Copy the entire prompt text block.
+3. Open the [Cloudflare Dashboard](https://dash.cloudflare.com) and click the **AI Assistant** icon in the header or Workers navigation.
+4. Paste the prompt and press Enter.
+5. The Cloudflare AI Assistant will automatically configure:
+   - Worker name: `devai-controller`
+   - Workers AI binding: `AI` (`@cf/meta/llama-3.3-70b-instruct`)
+   - Compatibility flags: `["nodejs_compat"]`
+   - Edge bindings: `DB`, `STORAGE`, `VECTOR_INDEX`, `CONFIG_KV`, `AGENT_SESSION`
+   - Edge endpoints and 7-step governance routers
+
+---
+
+### Method 2: Wrangler CLI (Automated Developer Workflow)
+
+#### Step 1: Install Wrangler & Authenticate
+```bash
+npm install -g wrangler
+wrangler login
+```
+
+#### Step 2: Provision Cloudflare Edge Resources
+```bash
+# 1. Relational Database (D1)
+npx wrangler d1 create devai_production_db
+
+# 2. Knowledge Documents Storage Bucket (R2)
+npx wrangler r2 bucket create devai-knowledge-docs
+
+# 3. Vector Embeddings Semantic Search (Vectorize)
+npx wrangler vectorize create devai-knowledge-vectors --dimensions=768 --metric=cosine
+
+# 4. Configuration & Session Cache (KV)
+npx wrangler kv:namespace create CONFIG_KV
+```
+
+*Update the created resource IDs in your `wrangler.toml` file under `database_id` and `id`.*
+
+#### Step 3: Set Encrypted Production Secrets on Cloudflare
+Run each command and input the corresponding value:
+```bash
+npx wrangler secret put CLOUDFLARE_ACCOUNT_ID
+npx wrangler secret put CLOUDFLARE_API_TOKEN
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put WORKER_SECRET
+```
+
+#### Step 4: Build Assets and Deploy
+```bash
+# 1. Typecheck and compile static assets + bundle server
+npm run build
+
+# 2. Deploy Worker to Cloudflare Global Edge
+npx wrangler deploy
+```
+
+---
+
+### Method 3: Cloudflare Dashboard (Direct Web Quick Edit)
+
+Use this method to deploy directly in your browser:
 
 1. **Log in to Cloudflare Dashboard**:
-   Navigate to [dash.cloudflare.com](https://dash.cloudflare.com) and select **Compute (Workers & Pages)**.
+   Navigate to [dash.cloudflare.com](https://dash.cloudflare.com) > **Compute (Workers & Pages)**.
 
 2. **Create a Worker**:
    - Click **Create application** > **Create Worker**.
    - Name the Worker: `devai-controller`.
    - Click **Deploy**.
 
-3. **Paste Worker Code**:
-   - In the Worker overview, click **Edit code** (Quick Edit).
-   - Delete any placeholder code.
-   - Open `/cloudflare-worker.js` from this repository.
-   - Copy the entire contents and paste into the editor.
-   - Click **Deploy** in the top right corner.
+3. **Paste Worker Script**:
+   - Click **Edit code** (Quick Edit).
+   - Replace all placeholder code with the contents of `/cloudflare-worker.js`.
+   - Click **Deploy** in the top right.
 
-4. **Bind Cloudflare Workers AI**:
-   - Return to the Worker page > **Settings** > **Bindings**.
+4. **Bind Workers AI**:
+   - Go to Worker **Settings** > **Bindings**.
    - Click **Add** > select **Workers AI**.
-   - Set the Variable name to: `AI`.
+   - Variable name: `AI`.
    - Click **Deploy**.
 
 5. **Configure Production Secrets**:
    - Go to **Settings** > **Variables and Secrets**.
-   - Add the following secrets under **Environment Variables / Secrets** (select **Encrypt** for each):
-     * `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID
-     * `CLOUDFLARE_API_TOKEN`: API Token with *Workers AI: Read* and *Workers Scripts: Edit*
-     * `SUPABASE_URL`: `https://your-project.supabase.co`
-     * `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service_role secret key
-     * `GITHUB_TOKEN`: Personal Access Token with `repo`, `read:user`, and `workflow` scopes
-     * `RESEND_API_KEY`: API key from Resend starting with `re_`
-     * `OPENAI_API_KEY`: *(Optional)* Standby fallback key (`sk-...`)
-     * `WORKER_SECRET`: A secure 32-character random string for AES-256 vault encryption
+   - Add encrypted secrets for:
+     * `CLOUDFLARE_ACCOUNT_ID`
+     * `CLOUDFLARE_API_TOKEN`
+     * `SUPABASE_URL`
+     * `SUPABASE_SERVICE_ROLE_KEY`
+     * `GITHUB_TOKEN`
+     * `RESEND_API_KEY`
+     * `ADMIN_PASSWORD`
+     * `WORKER_SECRET`
 
 6. **Deploy Frontend on Cloudflare Pages**:
-   - Run `npm run build` in your local project to generate the `/dist` directory.
-   - In the Cloudflare Dashboard, go to **Compute (Workers & Pages)** > **Create** > **Pages**.
-   - Choose **Direct Upload** (drag & drop the `/dist` folder) or connect your GitHub repository with:
-     * Framework preset: `Vite`
-     * Build command: `npm run build`
-     * Build output directory: `dist`
+   - Run `npm run build` locally to generate the `/dist` directory.
+   - In Cloudflare Dashboard, go to **Workers & Pages** > **Create** > **Pages** > **Direct Upload**.
+   - Upload the `/dist` directory.
 
 ---
 
-## Method 2: Cloudflare AI Assistant Prompt (Direct Automation)
-
-If you are using the Cloudflare Dashboard AI Assistant / Cloudflare Workers AI Builder:
-
-1. Open the file `CLOUDFLARE_WORKER_PROMPT.txt` in the root of this repository.
-2. Copy the entire prompt text block.
-3. Open the Cloudflare Dashboard and click the **AI Assistant** icon.
-4. Paste the prompt and press Enter.
-5. The Cloudflare AI Assistant will automatically configure:
-   - Worker name: `cloudflare-agent-hub`
-   - Workers AI binding: `AI` (`@cf/meta/llama-3.3-70b-instruct`)
-   - Compatibility flags: `["nodejs_compat"]`
-   - Edge endpoints and CORS handlers
-
----
-
-## Method 3: Wrangler CLI (Recommended for Developers)
-
-### Step 1: Install Wrangler & Authenticate
-```bash
-npm install -g wrangler
-npx wrangler login
-```
-
-### Step 2: Configure `wrangler.toml`
-Ensure `wrangler.toml` at the project root contains:
-```toml
-name = "cloudflare-agent-hub"
-main = "dist/server.cjs"
-compatibility_date = "2026-03-01"
-compatibility_flags = ["nodejs_compat"]
-
-# Native Cloudflare Workers AI Binding
-[ai]
-binding = "AI"
-
-# Static assets serving for React frontend
-[site]
-bucket = "./dist"
-```
-
-### Step 3: Set Secrets on Cloudflare via CLI
-Run the following commands and paste each secret when prompted:
-```bash
-npx wrangler secret put CLOUDFLARE_ACCOUNT_ID
-npx wrangler secret put CLOUDFLARE_API_TOKEN
-npx wrangler secret put SUPABASE_URL
-npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put OPENAI_API_KEY
-npx wrangler secret put WORKER_SECRET
-```
-
-### Step 4: Build and Deploy
-```bash
-# Compile React frontend and bundle backend server
-npm run build
-
-# Deploy to Cloudflare Workers Global Edge
-npx wrangler deploy
-```
-
----
-
-## Supabase PostgreSQL Setup & Audit Log Schema
+## 🗄️ Supabase PostgreSQL Setup & Audit Schema
 
 To enable persistent audit telemetry and session tracking in your Supabase database:
 
@@ -172,12 +171,35 @@ CREATE TABLE IF NOT EXISTS public.hub_audit_logs (
     error_message TEXT
 );
 
+-- Create agent executions table with 7-step governance fields
+CREATE TABLE IF NOT EXISTS public.agent_executions (
+    id TEXT PRIMARY KEY,
+    agent_id TEXT NOT NULL,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_prod_edge_001',
+    started_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    completed_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'completed',
+    approval_id TEXT,
+    audit_hash TEXT NOT NULL,
+    verification_passed BOOLEAN NOT NULL DEFAULT true,
+    verification_summary TEXT,
+    stages_executed JSONB NOT NULL DEFAULT '[]'::jsonb
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.hub_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agent_executions ENABLE ROW LEVEL SECURITY;
 
 -- Allow service_role full access (Backend Worker)
 CREATE POLICY "Service Role Full Access"
 ON public.hub_audit_logs
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service Role Agent Executions Full Access"
+ON public.agent_executions
 FOR ALL
 TO service_role
 USING (true)
@@ -190,51 +212,61 @@ FOR SELECT
 TO authenticated
 USING (true);
 
--- Create index on service and timestamp for fast dashboard lookups
+-- Indexes for ultra-fast query performance
 CREATE INDEX IF NOT EXISTS idx_audit_service_timestamp
 ON public.hub_audit_logs (service, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_executions_agent_timestamp
+ON public.agent_executions (agent_id, started_at DESC);
 ```
 
 ---
 
-## Verification & Health Check
+## 🧪 Post-Deployment Verification Checklist
 
-After deployment, verify your edge worker:
+Execute these curl checks against your production worker URL (`https://devai-controller.<your-subdomain>.workers.dev`):
 
-### 1. Test Health & Colocation
+### 1. Health & Active Bindings
 ```bash
-curl -i https://cloudflare-agent-hub.<your-subdomain>.workers.dev/api/health
-```
-*Expected response:*
-```json
-{"status":"operational","edge":"cloudflare-worker","colo":"SJC","timestamp":"2026-09-22T07:30:00.000Z"}
+curl -i "https://devai-controller.<your-subdomain>.workers.dev/api/health"
 ```
 
-### 2. Test Services Status Aggregator
+### 2. Operational Status Aggregator
 ```bash
-curl -i https://cloudflare-agent-hub.<your-subdomain>.workers.dev/api/status
+curl -i "https://devai-controller.<your-subdomain>.workers.dev/api/status"
 ```
-*Expected response:* Returns live health and latency metrics for Cloudflare, Supabase, GitHub, Resend, and OpenAI.
 
-### 3. Test Cloudflare Workers AI Coding Task
+### 3. Agent 7-Step Lifecycle Simulation
 ```bash
-curl -i -X POST https://cloudflare-agent-hub.<your-subdomain>.workers.dev/api/coding/execute \
+curl -i -X POST "https://devai-controller.<your-subdomain>.workers.dev/v1/agents/agent-general-01/simulate-flow" \
   -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Audit edge route handlers for rate limiting",
-    "repo": "operava/operava-worker-core",
-    "branch": "main"
-  }'
+  -d '{"prompt": "Audit edge worker and prepare client briefing"}'
 ```
-*Expected response:* Generates plan, AST diff, and pull request stage using `@cf/meta/llama-3.3-70b-instruct`.
+*Confirms all 7 steps executed with approval token, zero drift, and SHA-256 hash.*
+
+### 4. Natural-Language Automation Parser
+```bash
+curl -i -X POST "https://devai-controller.<your-subdomain>.workers.dev/v1/automations/parse" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Send monthly client update on October 31 at 09:00"}'
+```
+*Confirms validation contract evaluation and clarifying question logic.*
+
+### 5. Cloudflare Workers AI Embeddable Customer Chat
+```bash
+curl -i -X POST "https://devai-controller.<your-subdomain>.workers.dev/v1/widget/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What services do you provide?"}'
+```
 
 ---
 
-## Zero-Trust Security Checklist
-
-- [x] No secrets committed to git repositories (`.env` is in `.gitignore`)
+## 🔒 Zero-Trust Production Security Checklist
+- [x] Zero secrets committed to git repositories (`.env` in `.gitignore`)
 - [x] All credentials stored in Cloudflare Encrypted Secrets
 - [x] Frontend SPA contains zero API keys or backend admin tokens
-- [x] Supabase service_role key restricted to backend worker only
-- [x] Cloudflare Workers AI calls authenticated via native `env.AI` or bearer token
-- [x] CORS restricted to authorized domain origins in production
+- [x] Supabase service_role key restricted exclusively to backend worker
+- [x] Cloudflare Workers AI authenticated via native `env.AI` binding
+- [x] 7-Step Canonical Autonomous Lifecycle enforced on all autonomous agents
+- [x] SHA-256 cryptographic audit trail generated on every execution
+- [x] Human-in-the-loop approval gate enforced on consequential mutations

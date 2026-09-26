@@ -57,6 +57,12 @@ import {
   approveAutomation,
   cancelAutomation,
   runAutomationNow,
+  getAgentKnowledgeReferences,
+  getAgentStructureFlow,
+  getCompatibleKnowledgeForAgent,
+  linkKnowledgeToAgent,
+  unlinkKnowledgeFromAgent,
+  simulateAgentFlow,
 } from './server/services/agentPlatformService.js';
 
 // Protective authorization middleware allowing authorized operator controls
@@ -549,6 +555,59 @@ async function startServer() {
     const agent = getPlatformAgent(req.params.id);
     if (!agent) return res.status(404).json({ success: false, error: 'Agent not found' });
     res.json({ success: true, agent });
+  });
+
+  // Agent Structure Flow & Pipeline
+  app.get('/v1/agents/:id/flow', (req, res) => {
+    const flow = getAgentStructureFlow(req.params.id);
+    if (!flow) return res.status(404).json({ success: false, error: 'Structure flow not found for agent' });
+    res.json({ success: true, flow });
+  });
+
+  // Agent Knowledge References & Compatible Knowledge
+  app.get('/v1/agents/:id/knowledge', (req, res) => {
+    const references = getAgentKnowledgeReferences(req.params.id);
+    res.json({ success: true, references });
+  });
+
+  app.get('/v1/agents/:id/compatible-knowledge', (req, res) => {
+    const compatibleItems = getCompatibleKnowledgeForAgent(req.params.id);
+    res.json({ success: true, items: compatibleItems });
+  });
+
+  app.post('/v1/agents/:id/knowledge/link', (req, res) => {
+    try {
+      const { titleId, purpose } = req.body;
+      if (!titleId) return res.status(400).json({ success: false, error: 'titleId is required' });
+      const result = linkKnowledgeToAgent(req.params.id, titleId, purpose);
+      if (!result.success) return res.status(400).json(result);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/v1/agents/:id/knowledge/unlink', (req, res) => {
+    try {
+      const { titleId } = req.body;
+      if (!titleId) return res.status(400).json({ success: false, error: 'titleId is required' });
+      const result = unlinkKnowledgeFromAgent(req.params.id, titleId);
+      if (!result.success) return res.status(400).json(result);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Live Agent Pipeline Flow Simulation
+  app.post('/v1/agents/:id/simulate-flow', (req, res) => {
+    try {
+      const { prompt } = req.body;
+      const result = simulateAgentFlow(req.params.id, prompt);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
 
   // Tool Registry & MCP Servers
