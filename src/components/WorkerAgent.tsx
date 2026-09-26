@@ -310,7 +310,7 @@ A: Yes, all sessions and secrets are encrypted with AES-256-GCM zero-trust stora
 
 [VERIFICATION REQUIREMENTS]
 - Representatives never solicit passwords or authentication tokens over chat.
-- All password or administrative updates require OTP verification with ADMIN_WJT_KEY.
+- All password or administrative updates require two-factor OTP verification.
 
 [DISCOUNT & PRICING RULES]
 - Annual commitments receive a 20% discount applied automatically on invoice generation.`);

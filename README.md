@@ -1,167 +1,339 @@
-# ⚡ Dev’ai Controller
+# ⚡ Dev’ai Controller — General AI Agent Platform
 
-> **Autonomous Cloudflare Workers AI Controller, DevOps Orchestrator & Edge Dashboard**  
-> Integrated with **Cloudflare Workers AI**, **Cloudflare Pages**, **Supabase PostgreSQL**, **GitHub API v3**, and **Resend Mailer**.
-
----
-
-## 🌟 Overview
-
-**Dev’ai Controller** is an edge-native AI orchestrator and DevOps controller built for engineers and non-technical stakeholders alike. It provides an autonomous AI driver running on Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) to diagnose system errors in plain English, monitor multi-cloud infrastructure, execute surgical code plans, trigger deployments, and manage encrypted credentials with Zero-Trust isolation.
-
-### 🎨 Visual Identity & Design System
-- **Operava Global Theme**: High-contrast modern interface with the signature orange-to-purple gradient (`#ff6b35` -> `#f38020` -> `#9333ea`).
-- **Cloudflare AI Assistant Stream ("No Cards")**: Completely unboxed conversation canvas inspired by the Cloudflare Dashboard AI Assistant, where chat history smoothly scrolls upward as responses arrive.
-- **Dynamic Dot Matrix Background**: Subtle gray dot canvas (`chat-dot-bg`) that animates and drifts (`is-thinking`) when the AI is processing edge tasks.
-- **Animated Doing & Thinking Engine**: Real-time task step indicators with live elapsed timer, shimmer computation bars, and rotating circle loading indicators.
+> **Complete Architecture, Multi-Agent Orchestration, Automations Engine, Tool Registry (MCP), and Cloudflare Deployment Specification**  
+> **Version**: 1.0 • **Deployment Target**: GitHub + Cloudflare • **Primary AI**: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) • **Email Engine**: Resend API
 
 ---
 
-## 🧭 Navigation Tabs & Modules
+## 🌟 1. Product Purpose & Core Architectural Principles
 
-| Tab | Identifier | Description |
+**Dev’ai Controller** is a **generalized AI Agent Platform** rather than a single chatbot. It is engineered to orchestrate multi-agent workflows, ingest tenant-scoped knowledge, discover MCP tools dynamically, create automations from natural-language requests, schedule transactional emails via Resend, enforce operator approval before consequential actions, and deploy production workloads to the Cloudflare Global Edge.
+
+```
+                         USER / CUSTOMER
+                                |
+                                v
+                     +----------------------+
+                     | Web / Embedded UI    |
+                     | Chat / AGENTS / API  |
+                     +----------+-----------+
+                                |
+                                v
+                     +----------------------+
+                     | API Gateway / Worker |
+                     +----------+-----------+
+                                |
+                                v
+                     +----------------------+
+                     | Agent Orchestrator   |
+                     +----------+-----------+
+                                |
+              +-----------------+------------------+
+              |                 |                  |
+              v                 v                  v
+        Knowledge Layer     Tool Registry     Workflow Engine
+              |                 |                  |
+              v                 v                  v
+        Vector Search        MCP / APIs        Scheduler
+              |                 |                  |
+              +-----------------+------------------+
+                                |
+                                v
+                       +----------------+
+                       | Cloudflare AI  |
+                       | Model Gateway  |
+                       +----------------+
+                                |
+                                v
+                         Validation Layer
+                                |
+                    +-----------+-----------+
+                    |                       |
+              Needs Approval           Safe Answer
+                    |
+                    v
+               Approval
+                    |
+                    v
+               Execution
+                    |
+                    v
+              Audit / Logs
+```
+
+### 🏛️ The Core Law of the Platform
+- **AI plans and interprets.**
+- **Knowledge supplies factual context.**
+- **Tools perform actions.**
+- **Workflow Engine executes deterministic steps.**
+- **Permissions control access.**
+- **Approval controls consequential actions.**
+- **Cloudflare executes production workloads.**
+- **GitHub is the authoritative source-of-truth repository.**
+
+---
+
+## 🧭 2. AGENTS Workspace & Navigation
+
+The platform features an **AGENTS** workspace structured into three integrated modules:
+
+| Module | Purpose | Features |
 | :--- | :--- | :--- |
-| **1. Chat Dashboard** | `chat` | Autonomous AI Driver chat stream with animated task timeline, quick-action chips, and bottom-anchored command bar. |
-| **2. Audit Logs** | `vault` | Encrypted credential vault (AES-256-GCM) with 16-byte GCM authentication tags and Supabase RLS audit records. |
-| **3. Coding Agent** | `coding` | Cloudflare Workers AI coding engine generating AST plans, surgical file diffs, and GitHub PR dispatches. |
-| **4. Deployments Monitor** | `deployments` | Real-time monitoring of Cloudflare Workers and Pages, instant deployment triggers, and zero-downtime rollback. |
-| **5. Notifications** | `notifications` | Consolidated live event feed across Resend email deliveries, GitHub activities, and Cloudflare Edge alerts. |
-| **6. Knowledge Center** | `knowledge` | Non-technical knowledge base with plain-English error breakdowns, technical terms dictionary, and self-healing guides. |
-| **7. System Status** | `status` | Authoritative operational latency and availability for Cloudflare, Supabase, GitHub, Resend, and OpenAI. |
-| **8. Export Kit** | `export` | One-click export for `wrangler.toml`, GitHub Actions workflows, Supabase migration SQL, and Worker scripts. |
+| **1. Automations Engine** | Natural-Language Workflow Creation & Lifecycle Management | 9 status tabs (Working, Draft, Pending Approval, Scheduled, Active, Paused, Completed, Failed, Inactive), Natural-Language parser, Attached Knowledge with Title IDs, Validation Contract, Approval Preview modal (`[CANCEL]` vs `[APPROVE]`), and Execution Logs. |
+| **2. Chat & Multi-Agent** | Autonomous Multi-Agent Workspace | Agent selector (General, Developer, Knowledge, Customer Service, Design, Custom), Connected MCP Servers (Knowledge, GitHub, Figma, Resend, Cloudflare), Agent-to-Agent delegation (e.g. General -> Design -> Figma MCP -> Result). |
+| **3. Agent Worker & Architecture** | Cloudflare Edge Runtime & Embeddable Widget | Visual blueprint of Cloudflare bindings (`[ai]`, `[[d1_databases]]`, `[[r2_buckets]]`, `[[vectorize]]`, `[[kv_namespaces]]`, `[durable_objects]`), Resend pipeline, and Embeddable Customer Service Widget (`/widget.js`). |
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## ☁️ 3. Cloudflare Edge Architecture & Bindings
 
-- **Frontend**: React 18+ (SPA), Vite, Tailwind CSS v4, Lucide Icons.
-- **Backend**: Express + TypeScript (`server.ts`) powered by `tsx` in development and bundled into `dist/server.cjs` via `esbuild` for production.
-- **Edge Runtime Script**: `cloudflare-worker.js` for standalone zero-dependency execution across 330+ Cloudflare global edge cities.
-- **Primary AI**: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) with native `[ai]` binding.
-- **Redundancy & Failover**: Automatic standby failover to server-side Gemini (`gemini-2.5-flash`) or OpenAI (`gpt-4o-mini`).
-- **Cryptographic Engine**: Node.js `crypto` with `aes-256-gcm`, PBKDF2 key derivation (100,000 rounds), unique 12-byte initialization vectors (IV), and 16-byte authentication tags.
-- **Database Layer**: Supabase PostgreSQL with Row-Level Security (RLS) policies.
+The production runtime is deployed as a standalone Cloudflare Worker (`cloudflare-worker.js`) executing across 330+ edge locations in V8 isolates without cold starts.
+
+### Active `wrangler.toml` Bindings:
+
+```toml
+name = "devai-controller"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 1. Cloudflare Workers AI Native Binding
+[ai]
+binding = "AI"
+
+# 2. Cloudflare D1 Relational Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "devai_production_db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# 3. Cloudflare R2 Document & Knowledge Storage
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "devai-knowledge-docs"
+
+# 4. Cloudflare Vectorize Semantic Search Index
+[[vectorize]]
+binding = "VECTOR_INDEX"
+index_name = "devai-knowledge-vectors"
+
+# 5. Cloudflare Workers KV Cache & Config
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "00000000000000000000000000000000"
+
+# 6. Cloudflare Durable Objects Stateful Agent Coordination
+[durable_objects]
+bindings = [
+  { name = "AGENT_SESSION", class_name = "AgentSessionDO" }
+]
+
+# 7. Static Assets (React Vite SPA)
+[site]
+bucket = "./dist"
+
+# 8. Observability & Logging
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# 9. Scheduled Workflows & Cron Triggers
+[triggers]
+crons = ["*/15 * * * *"]
+```
+
+### Worker Invocation in Code:
+```javascript
+// Native Cloudflare Workers AI execution
+const aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct', {
+  messages: [
+    { role: 'system', content: 'You are the General Agent. Plan, ground in facts, and invoke tools.' },
+    { role: 'user', content: prompt }
+  ],
+  max_tokens: 1024
+});
+```
 
 ---
 
-## 📡 Complete REST API Catalog
+## ✉️ 4. Resend Transactional Email Engine
 
-### System & Health
-- `GET /api/health` — Edge runtime status, model availability, and Cloudflare colocation airport code (e.g., SJC, NRT).
-- `GET /api/status` — Operational health of Cloudflare, Supabase, GitHub, Resend, and OpenAI.
+Email scheduling and delivery is powered by the **Resend API v1** integration:
 
-### Chat & AI Driver
-- `GET /api/chat/sessions` — List all stored chat sessions with message counts and timestamps.
-- `POST /api/chat/sessions` — Create a new conversation session.
-- `GET /api/chat/sessions/:id` — Retrieve messages and execution traces for a specific session.
-- `POST /api/chat/sessions/:id/messages` — Send user prompt, stream Cloudflare Workers AI completion, and run automated tools.
-- `POST /api/chat/sessions/:id/clear` — Clear messages in a session.
-
-### Deployments & Edge Control
-- `GET /api/deployments` — Active worker version, past deployments, environment bindings, and rollback readiness.
-- `POST /api/deployments/trigger` — Trigger a new edge build and deployment.
-- `POST /api/deployments/rollback` — Instant rollback to the previous stable release.
-
-### Coding Engine & Repository
-- `POST /api/coding/execute` — Execute autonomous coding workflow (Analysis -> Plan -> AST Diff -> GitHub Branch/PR).
-
-### Security & Tokens
-- `GET /api/tokens` — Retrieve masked token inventory with expiration dates and usage counts.
-- `POST /api/tokens` — Store new service credential with AES-256-GCM encryption.
-- `POST /api/tokens/:id/test` — Live verify credential validity against target provider.
-- `DELETE /api/tokens/:id` — Safely revoke and delete token from vault.
-
-### Audit Trail & Logs
-- `GET /api/logs` — Immutable audit stream of all token decryptions, AI actions, and dispatch events.
+- **Email Knowledge Representation**:
+  - `Header`: Standard branded header component
+  - `Preheader`: High-contrast preview text
+  - `Subject`: Verified subject line
+  - `Body`: Markdown or HTML content
+  - `CTA`: Primary action button with verified target URL
+  - `Footer`: Zero-trust compliance and security notice
+  - `Signature`: Standard executive team signature
+  - `Variables`: Dynamic client tokens (e.g. `{{CLIENT_NAME}}`, `{{MONTH}}`, `{{YEAR}}`, `{{INVOCATIONS_COUNT}}`)
+- **Safety & Validation**:
+  - The AI parses attached knowledge templates (e.g. `monthly-client-email-v1`) and validates syntax.
+  - Verifies that no external malicious script tags (`<script>`) are present.
+  - Refuses to invent missing recipients, dates, or signatures.
 
 ---
 
-## 🚀 Getting Started Locally
+## 🐙 5. GitHub Integration & DevOps Pipeline
+
+GitHub serves as the **authoritative source-of-truth repository**:
+
+- **Repository Tree & File Analysis**: Real-time inspection via GitHub REST API v3.
+- **Surgical AST Diff Engine**: Produces precise patches targeting only modified lines without wholesale file rewrites.
+- **Automated Pull Request Dispatch**: Staged commits are pushed to isolated branches (e.g. `branch-agent-patch`) with structured PR checklists and verification logs.
+- **CI/CD Pipeline Workflow**:
+  ```
+  Developer Branch -> Local Test/Lint -> Push -> GitHub PR -> Automated Lint & Typecheck -> Review -> Cloudflare Edge Deploy
+  ```
+
+---
+
+## 🤖 6. Multi-Agent Registry & Agent-to-Agent Flow
+
+Agents are tenant-scoped and restricted by explicit permissions. **The model itself is never treated as the authorization layer.**
+
+| Agent | Identifier | Role & Permissions | Connected Tools |
+| :--- | :--- | :--- | :--- |
+| **General Agent** | `agent-general-01` | High-level orchestrator, intent formulation, tool dispatch | `knowledge.search`, `knowledge.add`, `email.schedule`, `agent.call`, `workflow.run` |
+| **Developer Agent** | `agent-developer-01` | Code patch synthesis, GitHub PRs, Cloudflare worker builds | `github.read`, `github.write`, `github.pull_request`, `cloudflare.deploy` |
+| **Knowledge Agent** | `agent-knowledge-01` | Document ingestion, chunking, and semantic vector retrieval | `knowledge.search`, `knowledge.add` |
+| **Customer Service Agent** | `agent-customer-01` | Isolated public webchat representative with zero admin privileges | `knowledge.search` |
+| **Design Agent** | `agent-design-01` | Figma MCP token extractor and component specification verifier | `figma.read`, `figma.create` |
+| **Custom Agent** | `agent-custom-01` | Configurable multi-step webhook ingestion and database reconciliation | `cloudflare.read`, `email.schedule` |
+
+### Agent-to-Agent Communication Flow:
+```
+Main Agent  -->  Design Agent  -->  Figma MCP  -->  Design Tokens  -->  Result  -->  Main Agent
+```
+
+---
+
+## ⚡ 7. Automations Engine & Consequential Action Approvals
+
+### Natural-Language Automation Example:
+1. **User input**: *"I want to schedule an email on 31."*
+2. **AI identifies ambiguity and asks**:
+   - *Which month?*
+   - *What time?*
+   - *Who receives it?*
+   - *What is the subject?*
+   - *What content/template should be used?*
+   - *Should it repeat?*
+3. **User clarifies**: *"Send the monthly client update to client@operava.com at 09:00 on October 31 using monthly-client-email-v1."*
+4. **AI inspects attached knowledge**: Loads `monthly-client-email-v1`, `company-branding-v2`, and `signature-template`.
+5. **AI Knowledge Validation**: Verifies 5/5 checks pass -> **READY FOR APPROVAL**.
+6. **Consequential Action Approval Preview**:
+   - `[ CANCEL ]`: No schedule is created. Automation remains in DRAFT/INACTIVE.
+   - `[ APPROVE ]`: Automation is saved, registered in Cloudflare Cron Triggers, and transitioned to `SCHEDULED`.
+
+### 9 Automation Lifecycle States:
+- `WORKING`: Being actively formulated or edited.
+- `DRAFT`: Saved but not validated or approved.
+- `PENDING_APPROVAL`: Validated and waiting for operator confirmation.
+- `SCHEDULED`: Approved and registered on Cloudflare Cron Triggers.
+- `ACTIVE`: Running recurring or event-driven automation.
+- `PAUSED`: Temporarily suspended without deletion.
+- `COMPLETED`: One-time execution completed successfully.
+- `FAILED`: Execution halted due to network or provider error.
+- `INACTIVE`: Disabled without deletion.
+
+---
+
+## 💬 8. Embeddable Customer Service AI Widget
+
+Provides an isolated, drop-in customer service chat widget for any external website:
+
+```html
+<script src="https://controller.operava.com/widget.js" data-tenant="tenant_prod_edge_001" data-agent="agent-customer-01" async></script>
+```
+
+- **Zero Privilege Leakage**: Customer AI only has `knowledge.read` permissions and can never access GitHub, Cloudflare, or email sending tools.
+- **Human Escalation**: If response confidence falls below 0.85, the inquiry is forwarded to an engineering lead ticket instead of inventing an answer.
+
+---
+
+## 📡 9. Complete REST API Catalog (`/v1/*` Namespace)
+
+### Agent & Tool Endpoints
+- `GET /v1/agents` — List authorized agents with permissions and enabled tools.
+- `GET /v1/agents/:id` — Retrieve specific agent profile and system instructions.
+- `GET /v1/tools` — Controlled Tool Registry with input/output schemas and risk levels.
+- `GET /v1/mcp` — List connected Model Context Protocol (MCP) servers.
+
+### Knowledge Layer Endpoints
+- `GET /v1/knowledge` — List tenant knowledge items with Title IDs.
+- `POST /v1/knowledge` — Ingest, chunk, and index a new document with an immutable Title ID.
+
+### Automations & Approval Endpoints
+- `GET /v1/automations` — List automations (supports `?status=SCHEDULED` filter).
+- `GET /v1/automations/:id` — Retrieve automation details and workflow sequence.
+- `POST /v1/automations/parse` — Natural-language interpreter and validation check contract.
+- `POST /v1/automations/:id/approve` — Consequential Action Approval Gate (activates schedule).
+- `POST /v1/automations/:id/cancel` — Cancel proposed automation.
+- `POST /v1/automations/:id/run` — Immediate execution ("Run Now").
+- `GET /v1/executions` — Immutable execution audit log stream.
+
+### Customer Service Widget Endpoints
+- `GET /widget.js` — Client JavaScript bundle for public site integration.
+- `GET /v1/widget/config` — Retrieve tenant widget styling and greeting settings.
+- `POST /v1/widget/chat` — Public customer inquiry endpoint grounded in authorized knowledge.
+
+---
+
+## 🔒 10. Security & Zero-Trust Secrets Isolation
+
+1. **Zero Browser Exposure**: API tokens (`CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `OPENAI_API_KEY`) are stored in server-side environment variables and encrypted using `AES-256-GCM` with 96-bit unique IVs.
+2. **Untrusted Uploads**: Ingested files are treated as untrusted data, never as system instructions.
+3. **Prompt Injection Defense**:
+   ```
+   SYSTEM RULES  >  SECURITY POLICY  >  USER PERMISSIONS  >  TOOL PERMISSIONS  >  KNOWLEDGE  >  USER CONTENT
+   ```
+4. **Least-Privilege Token Scoping**: Each agent receives only the tools explicitly granted in its permission array.
+
+---
+
+## 🚀 11. Local Development & Deployment
 
 ### Prerequisites
-- Node.js 18+ or 20+
-- npm or bun
+- Node.js 20+
+- npm
 
 ### 1. Installation
 ```bash
-# Clone the repository
 git clone https://github.com/jelvan-operava/Dev-ai-Controller-.git
 cd Dev-ai-Controller-
-
-# Install dependencies
 npm install
 ```
 
-### 2. Environment Variables
-Copy `.env.example` to `.env` and fill in your keys:
+### 2. Environment Configuration
 ```bash
 cp .env.example .env
 ```
+Populate `.env` with your API keys:
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `RESEND_API_KEY`
+- `GITHUB_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_PASSWORD`
 
-| Variable | Required | Description |
-| :--- | :--- | :--- |
-| `WORKER_SECRET` | Recommended | 32-character secret string used for AES-256-GCM key derivation |
-| `CLOUDFLARE_ACCOUNT_ID` | Optional | Your Cloudflare Account ID |
-| `CLOUDFLARE_API_TOKEN` | Optional | Token with Workers AI and Scripts edit permissions |
-| `SUPABASE_URL` | Optional | Supabase PostgreSQL project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Optional | Secret key for bypassing client RLS for audit logging |
-| `GITHUB_TOKEN` | Optional | Personal Access Token with repo scope |
-| `RESEND_API_KEY` | Optional | Key starting with `re_` for transactional mail dispatch |
-| `OPENAI_API_KEY` | Optional | Standby fallback key |
-
-*(Note: If optional keys are not configured, Dev’ai Controller runs in intelligent sandbox mode with built-in diagnostic and failover fallbacks.)*
-
-### 3. Development Server
+### 3. Start Development Server
 ```bash
 npm run dev
 ```
-The application will launch at `http://localhost:3000`.
+Runs Express fullstack server with Vite middleware on `http://localhost:3000`.
 
-### 4. Production Build & Start
+### 4. Build & Verify
 ```bash
+npm run lint
 npm run build
-npm run start
 ```
 
----
-
-## 🌐 Deploying to Cloudflare
-
-For direct automated deployment by an AI assistant or via Wrangler, refer to:
-- **`CLOUDFLARE_INTEGRATION_AI.md`**: Ready-to-paste instructions for Cloudflare AI Assistant or autonomous coding agents.
-- **`wrangler.toml`**: Cloudflare Workers configuration with `[ai]` binding and static asset integration.
-- **`cloudflare-worker.js`**: Native ES Module edge worker.
-
-To deploy via Wrangler CLI:
+### 5. Deploy to Cloudflare
 ```bash
-# 1. Build client bundle
-npm run build
-
-# 2. Add encrypted secrets
-npx wrangler secret put WORKER_SECRET
-npx wrangler secret put CLOUDFLARE_API_TOKEN
-npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-
-# 3. Deploy
 npx wrangler deploy
 ```
-
----
-
-## 💡 Troubleshooting & Known Error Resolvers
-
-Dev’ai Controller includes built-in diagnostic intelligence for common cloud errors:
-- **Cloudflare Error 1101 (Worker Threw Exception)**: Check missing secrets or enable `compatibility_flags = ["nodejs_compat"]`.
-- **Cloudflare Error 1000 / 1014 (DNS Points to Prohibited IP)**: Fix A record pointing back to Cloudflare internal IPs or attach a Custom Domain.
-- **Cloudflare Error 521 / 522 (Web Server Down / Timeout)**: Check origin process status and whitelist Cloudflare IP ranges.
-- **Supabase Error 42501 (RLS Recursion / Permission Denied)**: Use `auth.jwt() ->> 'role'` instead of table self-querying; use service role key for audit logs.
-- **Resend Error 403 (Domain Not Verified)**: Send from `onboarding@resend.dev` for testing or complete DKIM/SPF DNS records.
-
----
-
-## 🧑‍💻 Guide for the Next Developer / AI Agent
-
-1. **Keep Intent Pure**: Maintain the "no cards" Cloudflare AI layout in `DevaiChat.tsx`. Do not wrap the conversation stream back into nested card boxes.
-2. **Theme Consistency**: All new accent components and status elements should utilize the Operava orange-to-purple gradient tokens (`bg-brand-gradient`, `text-brand-gradient`, `border-brand-gradient`).
-3. **Full-Stack Completeness**: Whenever introducing a new feature, implement the complete pipeline: UI component, backend Express route, database storage model, and audit log.
-4. **Zero-Trust Rule**: Never return raw decrypted tokens to the browser. Only return masked strings (`getMaskedTokenValue`).
+Deploys `cloudflare-worker.js` with all bindings to the Cloudflare Global Edge.

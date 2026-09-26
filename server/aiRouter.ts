@@ -1020,9 +1020,7 @@ Return ONLY valid JSON matching this exact format:
 
         if (query.includes('who developed') || query.includes('who created') || query.includes('author') || query.includes('developed by') || query.includes('creator')) {
           return [
-            'Dev’ai Controller Ownership',
-            '',
-            'Internally developed by Jelvan R. All rights reserved. 2026.',
+            'Dev’ai Controller Platform',
             '',
             'Dev’ai Controller is a private edge orchestration platform built on Cloudflare Workers, Cloudflare Pages, Supabase PostgreSQL, GitHub, and Resend with zero-trust secret isolation.',
           ].join('\n');
@@ -1061,7 +1059,7 @@ Return ONLY valid JSON matching this exact format:
       if (ai) {
         try {
           const systemInstruction = [
-            'You are Dev’ai Controller, an intelligent edge orchestration assistant internally developed by Jelvan R. All rights reserved. 2026.',
+            'You are Dev’ai Controller, an intelligent edge orchestration assistant.',
             'Primary Operator User: secured.jelvan@gmail.com (Developer / Operator).',
             'Core Stack: Cloudflare Workers, Cloudflare Workers AI, Supabase PostgreSQL with Row Level Security, Resend, and GitHub.',
             'Security: Zero-Trust Secret Isolation with zero browser exposure.',

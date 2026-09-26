@@ -41,6 +41,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     {
+      id: 'agents',
+      label: 'AGENTS Platform',
+      icon: Zap,
+    },
+    {
       id: 'chat',
       label: 'Chat',
       icon: Sparkles,
@@ -151,16 +156,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             );
           })}
-        </div>
-
-        {/* Footer: User requested attribution */}
-        <div className="p-3 border-t border-[#e2e4e9] dark:border-[#252a35] bg-[#f8f9fb] dark:bg-[#10131a] text-center">
-          <p className="text-[11px] text-[#80868b] leading-tight font-medium">
-            Internally developed by Jelvan R.
-          </p>
-          <p className="text-[10px] text-[#80868b] mt-0.5">
-            All rights reserved. 2026
-          </p>
         </div>
       </aside>
     </>

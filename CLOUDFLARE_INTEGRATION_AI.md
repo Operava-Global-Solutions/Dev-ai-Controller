@@ -1,135 +1,134 @@
 # 🚀 CLOUDFLARE INTEGRATION AI: DEPLOYMENT PROMPT & GUIDE
+# Specification Version: 1.0 (General AI Agent Platform)
 
 > **Instructions for the Operator:**
-> Copy and paste the prompt below into the **Cloudflare Dashboard AI Assistant**, **Wrangler AI Assistant**, or any **AI Coding Agent** (Antigravity, Claude, ChatGPT, Cursor) to instruct it to deploy the **Dev’ai Controller** application to your Cloudflare account.
+> Copy and paste the prompt below into the **Cloudflare Dashboard AI Assistant**, **Wrangler AI Assistant**, or any **AI Coding Agent** (Cursor, Claude, Antigravity, ChatGPT) to deploy the **Dev’ai Controller** platform to your Cloudflare account.
 
 ---
 
 ## 📋 COPY-PASTE PROMPT FOR AI ASSISTANT
 
 ```text
-You are deploying "Dev’ai Controller" to my Cloudflare account.
-Please configure, build, and deploy this project as a high-performance Cloudflare Worker with Cloudflare Pages / Assets integration using the following specifications:
+You are deploying "Dev’ai Controller" — a General AI Agent Platform — to my Cloudflare account.
+Please configure, build, and deploy this project as a high-performance Cloudflare Worker with static site assets using the following specifications:
 
 1. WORKER & BINDING SPECIFICATIONS:
    - Worker Name: "devai-controller"
    - Compatibility Date: "2026-03-01"
    - Compatibility Flags: ["nodejs_compat"]
+
    - Cloudflare Workers AI Binding:
      [ai]
      binding = "AI"
      model = "@cf/meta/llama-3.3-70b-instruct"
-   - Assets / Static Frontend Directory:
-     [assets]
-     directory = "./dist"
-     binding = "ASSETS"
+
+   - Cloudflare D1 Relational Database Binding:
+     [[d1_databases]]
+     binding = "DB"
+     database_name = "devai_production_db"
+     database_id = "[D1_DATABASE_ID]"
+
+   - Cloudflare R2 Document & Knowledge Storage:
+     [[r2_buckets]]
+     binding = "STORAGE"
+     bucket_name = "devai-knowledge-docs"
+
+   - Cloudflare Vectorize Semantic Search Index:
+     [[vectorize]]
+     binding = "VECTOR_INDEX"
+     index_name = "devai-knowledge-vectors"
+
+   - Cloudflare Workers KV Cache & Config:
+     [[kv_namespaces]]
+     binding = "CONFIG_KV"
+     id = "[KV_NAMESPACE_ID]"
+
+   - Cloudflare Durable Objects (Stateful Agent Sessions):
+     [durable_objects]
+     bindings = [
+       { name = "AGENT_SESSION", class_name = "AgentSessionDO" }
+     ]
+
+   - Cron Triggers (Scheduled Workflows):
+     [triggers]
+     crons = ["*/15 * * * *"]
+
+   - Static Frontend Directory:
+     [site]
+     bucket = "./dist"
 
 2. ENVIRONMENT SECRETS (Configure in Cloudflare Worker Settings > Variables & Secrets or via `wrangler secret put`):
-   - CLOUDFLARE_ACCOUNT_ID: [Cloudflare Account ID]
-   - CLOUDFLARE_API_TOKEN: [Cloudflare API Token with Workers AI and Worker Scripts Edit permissions]
-   - SUPABASE_URL: [Supabase Project URL, e.g., https://xyz.supabase.co]
-   - SUPABASE_SERVICE_ROLE_KEY: [Supabase service-role secret key for RLS-enforced token vault and audit logs]
+   - RESEND_API_KEY: [Resend API key starting with re_ for transactional emails]
    - GITHUB_TOKEN: [GitHub Personal Access Token with repo, workflow, read:user scopes]
-   - RESEND_API_KEY: [Resend API key starting with re_]
-   - OPENAI_API_KEY: [Optional fallback key for gpt-4o-mini standby redundancy]
-   - WORKER_SECRET: [32-character encryption key for AES-256-GCM token storage]
+   - CLOUDFLARE_API_TOKEN: [Cloudflare API Token with Workers AI and Scripts Edit permissions]
+   - CLOUDFLARE_ACCOUNT_ID: [Cloudflare Account ID]
+   - SUPABASE_URL: [Supabase Project URL, e.g., https://xyz.supabase.co]
+   - SUPABASE_SERVICE_ROLE_KEY: [Supabase service-role secret key]
+   - ADMIN_PASSWORD: [Administrative access password]
+   - WORKER_SECRET: [32-character encryption seed for AES-256-GCM token storage]
 
 3. DEPLOYMENT SCRIPT & ROUTING:
-   Use the worker script `cloudflare-worker.js` (or compile `server.ts`):
-   - Expose the following REST APIs:
-     * GET  /api/health -> Edge status, runtime colocation (e.g., SJC, NRT, LHR)
-     * GET  /api/status -> Real-time status of Cloudflare, Supabase, GitHub, Resend, and OpenAI
-     * GET  /api/chat/sessions -> Chat sessions and conversation history
-     * POST /api/chat/sessions -> Create fresh chat session
-     * GET  /api/chat/sessions/:id -> Retrieve session messages
-     * POST /api/chat/sessions/:id/messages -> Cloudflare Workers AI Llama 3.3 70B inference stream
-     * POST /api/chat/sessions/:id/clear -> Clear session messages
-     * GET  /api/deployments -> Live edge deployment log & active version
-     * POST /api/deployments/trigger -> Trigger edge deployment build
-     * POST /api/deployments/rollback -> Zero-downtime version rollback
-     * GET  /api/notifications -> Multi-service alert feed (Resend, GitHub, Cloudflare)
-     * POST /api/coding/execute -> Autonomous code planning, diff generation & PR creation
-     * GET  /api/tokens -> Encrypted vault tokens with AES-256-GCM auth tags
-     * POST /api/tokens -> Store new encrypted service credential
-     * GET  /api/logs -> Audit log stream with RLS enforcement
-   - Static Asset Fallback:
-     * Serve index.html and Vite assets from ./dist for all non-API paths (SPA fallback)
+   Use the worker script `cloudflare-worker.js`:
+   - Expose the /v1 REST API namespace:
+     * GET  /v1/agents -> List authorized platform agents
+     * GET  /v1/tools -> Controlled Tool Registry with permissions & risk levels
+     * GET  /v1/mcp -> Connected Model Context Protocol (MCP) servers
+     * GET  /v1/knowledge -> Knowledge objects with Title IDs
+     * POST /v1/knowledge -> Ingest & index document with Title ID
+     * GET  /v1/automations -> Automations engine with 9 lifecycle states
+     * POST /v1/automations/parse -> Natural-language automation interpreter
+     * POST /v1/automations/:id/approve -> Consequential Action Approval Gate
+     * POST /v1/automations/:id/cancel -> Cancel proposed automation
+     * POST /v1/automations/:id/run -> Immediate execution trigger
+     * GET  /v1/executions -> Execution audit trail
+     * GET  /v1/widget/config -> Customer service widget configuration
+     * POST /v1/widget/chat -> Customer service AI chat grounded in knowledge
+     * GET  /widget.js -> Static embeddable customer service script
+     * GET  /api/health -> Edge status and colocation airport code
 
 4. BUILD & DEPLOY EXECUTION:
    1. Install dependencies: `npm install`
    2. Build frontend assets: `npm run build`
-   3. Verify `wrangler.toml` has `[ai]` binding enabled
-   4. Deploy worker and assets: `npx wrangler deploy`
-
-5. POST-DEPLOYMENT HEALTH VERIFICATION:
-   Once deployed, run these verification curl requests:
-   - curl -s https://devai-controller.<your-subdomain>.workers.dev/api/health
-   - curl -s https://devai-controller.<your-subdomain>.workers.dev/api/status
-   - curl -s -X POST https://devai-controller.<your-subdomain>.workers.dev/api/chat/sessions \
-       -H "Content-Type: application/json" \
-       -d '{"title": "Edge Health Check"}'
-
-Verify that the response returns healthy status with `@cf/meta/llama-3.3-70b-instruct` active.
+   3. Deploy worker: `npx wrangler deploy`
 ```
 
 ---
 
-## ⚙️ TECHNICAL ARCHITECTURE
+## 🛠️ Step-by-Step CLI Instructions
 
-### 1. Cloudflare Workers AI Binding (`wrangler.toml`)
-The AI engine runs natively at the Cloudflare Edge using Workers AI:
-```toml
-name = "devai-controller"
-main = "cloudflare-worker.js"
-compatibility_date = "2026-03-01"
-compatibility_flags = ["nodejs_compat"]
-
-[ai]
-binding = "AI"
-
-[assets]
-directory = "./dist"
-binding = "ASSETS"
-
-[observability]
-enabled = true
-head_sampling_rate = 1
+### Step 1: Install Wrangler CLI
+```bash
+npm install -g wrangler
+wrangler login
 ```
 
-### 2. Dual-Engine Intelligence Pipeline
-1. **Primary Edge Engine**: Cloudflare Workers AI model `@cf/meta/llama-3.3-70b-instruct` running across 330+ global edge cities.
-2. **Built-in Standby Fallback**: Secondary fallback to `gemini-2.5-flash` / `gpt-4o-mini` with automatic failover if edge rate limits or regional maintenance occur.
-3. **Built-in Error Diagnostic Engine**: Immediate plain-English diagnosis and resolution instructions for all Cloudflare error codes (1101, 1000, 1014, 521, 522, 524), Supabase 42501 RLS recursion, Resend 403 DNS verification, and GitHub 401/403 credentials.
-
-### 3. Step-by-Step Deployment Commands (CLI)
-
+### Step 2: Create Cloudflare D1 Database & Vectorize Index
 ```bash
-# 1. Clone or navigate to the repository
-cd Dev-ai-Controller-
+# Create D1 database
+npx wrangler d1 create devai_production_db
 
-# 2. Install dependencies
-npm install
+# Create R2 bucket
+npx wrangler r2 bucket create devai-knowledge-docs
 
-# 3. Build frontend bundle
-npm run build
+# Create Vectorize index (768 dimensions for Workers AI text embeddings)
+npx wrangler vectorize create devai-knowledge-vectors --dimensions=768 --metric=cosine
 
-# 4. Set encrypted Cloudflare Worker secrets
-npx wrangler secret put CLOUDFLARE_ACCOUNT_ID
+# Create KV namespace
+npx wrangler kv:namespace create CONFIG_KV
+```
+
+### Step 3: Configure Cloudflare Secrets
+```bash
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put CLOUDFLARE_API_TOKEN
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put WORKER_SECRET
-
-# 5. Deploy to Cloudflare Workers
-npx wrangler deploy
+npx wrangler secret put ADMIN_PASSWORD
 ```
 
----
-
-## 🔒 ZERO-TRUST SECURITY SPECIFICATIONS
-
-- **Token Encryption**: All third-party secrets (GitHub, Resend, Supabase) are encrypted via **AES-256-GCM** using a key derived from `WORKER_SECRET` with unique 12-byte initialization vectors (IV) and 16-byte authentication tags.
-- **No Secret Leaks**: Decrypted values are never exposed to browser client code. The frontend only receives masked values (e.g., `ghp_••••••••ab12`).
-- **Audit Logging**: Every API dispatch or token decryption event is recorded in the Supabase audit log table with duration, caller IP, and timestamp.
+### Step 4: Build and Deploy
+```bash
+npm run build
+npx wrangler deploy
+```

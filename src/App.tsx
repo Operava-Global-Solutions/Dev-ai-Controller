@@ -12,6 +12,7 @@ import { DevaiChat } from './components/DevaiChat.js';
 import { ChatHistory } from './components/ChatHistory.js';
 import { KnowledgeCenter } from './components/KnowledgeCenter.js';
 import { WorkerAgent } from './components/WorkerAgent.js';
+import { AgentsPlatform } from './components/AgentsPlatform.js';
 import { AdminProtectiveWrapper } from './components/AdminProtectiveWrapper.js';
 import type {
   ServiceStatusInfo,
@@ -24,7 +25,7 @@ import type {
 } from './types/index.js';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('chat');
+  const [activeTab, setActiveTab] = useState<string>('agents');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedChatSessionId, setSelectedChatSessionId] = useState<string | null>(null);
 
@@ -349,6 +350,8 @@ export default function App() {
                 activeTab === 'chat' ? 'flex-1 flex flex-col h-full min-h-0' : ''
               }`}
             >
+              {activeTab === 'agents' && <AgentsPlatform />}
+
               {activeTab === 'status' && (
                 <StatusDashboard
                   services={services}

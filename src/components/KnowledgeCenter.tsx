@@ -690,14 +690,14 @@ export const KnowledgeCenter: React.FC = () => {
             </div>
           </div>
 
-          {/* Section 4: Authorship & Intellectual Property */}
+          {/* Section 4: Architecture Status */}
           <div className="rounded-2xl border border-[#e2e4e9] dark:border-[#252a35] bg-white dark:bg-[#161a22] p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#5f6368] dark:text-[#9aa0a6]">
             <div>
               <p className="font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">
-                Internally developed by Jelvan R. All rights reserved. 2026
+                Dev’ai Controller Edge Platform
               </p>
               <p className="text-[11px] mt-0.5">
-                Dev’ai Controller Edge Platform • Zero-Trust Secrets Architecture
+                Zero-Trust Secrets Architecture
               </p>
             </div>
             <div className="text-[11px] font-mono px-3 py-1 rounded-lg bg-[#f0f2f5] dark:bg-[#202530] text-[#5f6368] dark:text-[#9aa0a6]">

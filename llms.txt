@@ -1,0 +1,113 @@
+# General AI Agent Platform (Dev’ai Controller)
+# Architectural Baseline Specification Version 1.0
+
+> Generalized AI Agent Platform engineered for production execution on Cloudflare Workers, Cloudflare Pages, GitHub, and Resend.
+
+## 1. What the Platform Is
+Dev’ai Controller is a generalized AI Agent Platform rather than a single chatbot. It combines:
+1. Multi-Agent Orchestration (General, Developer, Knowledge, Customer Service, Design, Custom agents).
+2. Knowledge Layer with Title IDs, chunking, and semantic vector retrieval (Cloudflare Vectorize + R2).
+3. Tool Registry & Model Context Protocol (MCP) clients across GitHub, Figma, Resend, and Cloudflare.
+4. Natural-Language Automations Engine with 9 lifecycle states: WORKING, DRAFT, PENDING_APPROVAL, SCHEDULED, ACTIVE, PAUSED, COMPLETED, FAILED, INACTIVE.
+5. Deterministic Workflow Engine with consequential action approval gates ([CANCEL] vs [APPROVE]).
+6. Embeddable Customer Service Widget (`/widget.js`) with isolated permissions and human escalation.
+7. Cloudflare Edge Runtime with native bindings (`AI`, `DB` D1, `STORAGE` R2, `VECTOR_INDEX` Vectorize, `CONFIG_KV`, `AGENT_SESSION` Durable Objects, `WORKFLOWS`/Cron Triggers).
+8. Zero-Trust secret isolation (AES-256-GCM authenticated cipher with 96-bit IVs and zero browser exposure).
+
+## 2. Core Architectural Principle
+AI plans and interprets.
+Knowledge supplies factual context.
+Tools perform actions.
+Workflow Engine executes deterministic steps.
+Permissions control access.
+Approval controls consequential actions.
+Cloudflare executes production workloads.
+GitHub is the authoritative source-of-truth repository.
+
+## 3. Agents Registry
+- **General Agent (`agent-general-01`)**: Primary orchestrator formulation execution plans, knowledge retrieval, and tool dispatches.
+- **Developer Agent (`agent-developer-01`)**: Codebase specialist integrated with GitHub REST API and Cloudflare Workers for surgical diffs, PR dispatches, and edge deployment automation.
+- **Knowledge Agent (`agent-knowledge-01`)**: Document ingestion, chunking, semantic retrieval, and factual truth verification engine.
+- **Customer Service Agent (`agent-customer-01`)**: Isolated, zero-privilege embeddable customer representative for public webchats and widget embeds.
+- **Design Agent (`agent-design-01`)**: Interface & design system specialist integrated with Figma MCP for token inspections and component specs.
+- **Custom Agent (`agent-custom-01`)**: Configurable edge agent tailored for multi-step webhook ingestion and database reconciliations.
+
+## 4. Controlled Tool Registry & MCP Architecture
+Tools are dynamically discoverable and permission-enforced:
+- `knowledge.search`: Semantic vector search across tenant-authorized documents.
+- `knowledge.add`: Ingest, chunk, and index a document with an immutable Title ID.
+- `email.send`: Transactional email dispatch via Resend API pipeline (Requires Approval).
+- `email.schedule`: Registers a cron schedule in Cloudflare Workflows / Cron Triggers (Requires Approval).
+- `github.read`: Inspect directory trees, files, commits, and branches.
+- `github.write`: Commit surgical AST patch to designated branch (Requires Approval).
+- `github.pull_request`: Create PR with verification checklist and summary (Requires Approval).
+- `figma.read`: Read typography, color palettes, and component tokens.
+- `figma.create`: Create design component specs.
+- `cloudflare.read`: Read active worker versions, environments, and health.
+- `cloudflare.deploy`: Deploy edge release to Cloudflare global network (Requires Approval).
+- `agent.call`: Invoke sub-agent (e.g., General Agent -> Design Agent -> Result).
+- `task.schedule`: Schedule deterministic workflow execution on Cloudflare triggers.
+- `workflow.run`: Execute workflow step sequence with audit logging.
+
+## 5. Knowledge Architecture & Title IDs
+Knowledge objects are independent from the agent and reusable across workflows.
+Each knowledge object has a unique `Title ID`:
+- `monthly-client-email-v1` (HTML executive briefing template)
+- `company-branding-v2` (JSON brand palette, gradient `#ff6b35` -> `#f38020` -> `#9333ea`, typography)
+- `signature-template` (HTML executive email signature)
+- `client-recipient-list` (JSON client recipient roster)
+
+## 6. Automations Engine & Validation Contract
+Automations formulate from natural language (e.g., "I want to schedule an email on 31").
+The AI detects missing parameters and asks clarifying questions:
+1. Which month?
+2. What time?
+3. Who receives it?
+4. What is the subject?
+5. What content/template should be used?
+6. Should it repeat?
+
+Validation checks before approval:
+- Required knowledge attached (Title IDs verified)
+- Recipient email resolvable
+- Schedule unambiguous
+- Email tool authorized
+- HTML syntax validated without external script tags
+
+## 7. Consequential Action Approval Gate
+Actions with external side-effects (sending email, modifying repo, deploying code) require explicit operator review:
+- `[ CANCEL ]`: No schedule created, workflow remains in DRAFT/INACTIVE.
+- `[ APPROVE ]`: Workflow saved, registered on Cloudflare Cron Triggers, transitioned to SCHEDULED/ACTIVE.
+
+## 8. API Specification (/v1 Namespace)
+- `GET /v1/agents`: List authorized agents.
+- `GET /v1/agents/:id`: Retrieve agent profile and permissions.
+- `GET /v1/tools`: List discoverable tools in the Tool Registry.
+- `GET /v1/mcp`: List connected MCP servers.
+- `GET /v1/knowledge`: List attached knowledge items with Title IDs.
+- `POST /v1/knowledge`: Ingest new document with Title ID.
+- `GET /v1/automations`: List automations filtered by status.
+- `POST /v1/automations/parse`: Natural-language automation parser.
+- `POST /v1/automations/:id/approve`: Approve consequential action.
+- `POST /v1/automations/:id/cancel`: Cancel automation proposal.
+- `POST /v1/automations/:id/run`: Immediate execution ("Run Now").
+- `GET /v1/executions`: Execution audit trail.
+- `GET /v1/widget/config`: Embeddable customer widget configuration.
+- `POST /v1/widget/chat`: Customer service chat endpoint.
+- `GET /widget.js`: Static client widget script.
+
+## 9. Cloudflare Deployment Architecture
+- `wrangler.toml`: Complete configuration with bindings:
+  - `[ai]`: Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`)
+  - `[[d1_databases]]`: SQLite relational data
+  - `[[r2_buckets]]`: Documents & assets
+  - `[[vectorize]]`: Semantic vectors
+  - `[[kv_namespaces]]`: Token cache
+  - `[durable_objects]`: Stateful sessions
+  - `[triggers]`: Scheduled crons
+
+## 10. Development & Verification Commands
+- `npm run build`: Compiles Vite frontend SPA and verifies TypeScript types.
+- `npm run lint`: Validates syntax with `tsc --noEmit`.
+- `npx wrangler deploy`: Deploys standalone `cloudflare-worker.js` to Cloudflare.
+- `npx wrangler dev`: Runs local Cloudflare Worker emulation.

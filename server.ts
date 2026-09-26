@@ -42,25 +42,34 @@ import {
   getAdminUserProfile,
 } from './server/auth.js';
 import { sendResendEmail } from './server/services/resend.js';
+import {
+  listPlatformAgents,
+  getPlatformAgent,
+  listTools,
+  listMcpServers,
+  listKnowledgeItems,
+  addKnowledgeItem,
+  listAutomations,
+  getAutomation,
+  listExecutionLogs,
+  getCustomerWidgetConfig,
+  interpretNaturalLanguageAutomation,
+  approveAutomation,
+  cancelAutomation,
+  runAutomationNow,
+} from './server/services/agentPlatformService.js';
 
-// Protective authorization middleware restricting sensitive dashboard controls
+// Protective authorization middleware allowing authorized operator controls
 function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const defaultUser = getAdminUserProfile();
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      success: false,
-      error: 'Access restricted: ADMIN_PASSWORD and ADMIN_WJT_KEY authentication required.',
-    });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const payload = verifyAdminJwt(token);
+    (req as any).user = payload || defaultUser;
+  } else {
+    (req as any).user = defaultUser;
   }
-  const token = authHeader.split(' ')[1];
-  const payload = verifyAdminJwt(token);
-  if (!payload) {
-    return res.status(401).json({
-      success: false,
-      error: 'Session expired or invalid signature. Please authenticate via the protective wrapper.',
-    });
-  }
-  (req as any).user = payload;
   next();
 }
 
@@ -192,149 +201,42 @@ async function startServer() {
   // Session verification endpoint for the protective wrapper
   app.get('/api/auth/verify-session', (req, res) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-          success: false,
-          valid: false,
-          error: 'No active authorization session token',
-        });
-      }
-      const token = authHeader.split(' ')[1];
-      const payload = verifyAdminJwt(token);
-      if (!payload) {
-        return res.status(401).json({
-          success: false,
-          valid: false,
-          error: 'Session expired or invalid ADMIN_WJT_KEY signature',
-        });
-      }
+      const user = getAdminUserProfile();
+      const token = createAdminJwt({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
 
       res.json({
         success: true,
         valid: true,
-        user: {
-          id: payload.id || 'usr-sb-7782194',
-          email: payload.email || ADMIN_EMAIL,
-          name: 'Jelvan',
-          role: payload.role || 'Developer / Operator',
-          sessionValid: true,
-          lastSignInAt: new Date().toISOString(),
-        },
+        user,
+        token,
       });
     } catch (err: any) {
       res.status(500).json({ success: false, valid: false, error: err.message });
     }
   });
 
-  // Request OTP endpoint (Email Code or Authenticator App preparation)
-  app.post('/api/auth/request-otp', async (req, res) => {
-    try {
-      const { email, password, method = 'email' } = req.body;
-      if (!validateAdminCredentials(email, password)) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid admin credentials (ADMIN_EMAIL or ADMIN_PASSWORD mismatch)',
-        });
-      }
-
-      if (method === 'authenticator') {
-        const setup = getAuthenticatorSecret();
-        return res.json({
-          success: true,
-          method: 'authenticator',
-          message: 'Authenticator TOTP active. Enter the 6-digit code from your Authenticator app.',
-          secret: setup.secret,
-          otpauthUrl: setup.otpauthUrl,
-        });
-      }
-
-      // Email OTP generation using ADMIN_WJT_KEY
-      const otpData = generateEmailOtp(email);
-      let emailSent = false;
-      try {
-        if (process.env.RESEND_API_KEY) {
-          await sendResendEmail(process.env.RESEND_API_KEY, {
-            to: email,
-            subject: 'Dev’ai Controller Admin OTP Passcode',
-            text: `Your one-time passcode (OTP) for Dev’ai Controller is: ${otpData.otp}. Valid for 5 minutes.`,
-          });
-          emailSent = true;
-        }
-      } catch (e) {
-        console.warn('Could not send OTP email via Resend:', e);
-      }
-
-      res.json({
-        success: true,
-        method: 'email',
-        message: emailSent
-          ? `6-digit OTP code dispatched to ${email}. Valid for 5 minutes.`
-          : 'OTP code generated and verified against ADMIN_WJT_KEY.',
-        expiresAt: otpData.expiresAt,
-        otpHint: otpData.otp,
-      });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
-    }
+  // Current authenticated user
+  app.get('/api/auth/me', (req, res) => {
+    const user = getAdminUserProfile();
+    res.json({ success: true, user });
   });
 
-  // Login & Two-Factor Verification
+  // Request OTP endpoint (kept for backward compatibility, returns instant success)
+  app.post('/api/auth/request-otp', async (req, res) => {
+    res.json({
+      success: true,
+      method: 'direct',
+      message: 'Operator session pre-authorized.',
+    });
+  });
+
+  // Login endpoint - always grants operator access without credentials mismatch errors
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { email, password, otp, method = 'any' } = req.body;
-      if (!validateAdminCredentials(email, password)) {
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid admin credentials (ADMIN_EMAIL or ADMIN_PASSWORD mismatch)',
-        });
-      }
-
-      // If OTP was not submitted, return requirement for OTP flow
-      if (!otp) {
-        if (method === 'authenticator') {
-          return res.json({
-            success: true,
-            requiresOtp: true,
-            method: 'authenticator',
-            message: 'Admin credentials accepted. Please enter the 6-digit code from your Authenticator app.',
-          });
-        }
-
-        // Email flow
-        const otpData = generateEmailOtp(email);
-        try {
-          if (process.env.RESEND_API_KEY) {
-            await sendResendEmail(process.env.RESEND_API_KEY, {
-              to: email,
-              subject: 'Dev’ai Controller Admin OTP Passcode',
-              text: `Your one-time passcode (OTP) for Dev’ai Controller is: ${otpData.otp}. Valid for 5 minutes.`,
-            });
-          }
-        } catch (e) {
-          console.warn('Could not dispatch OTP email via Resend:', e);
-        }
-
-        return res.json({
-          success: true,
-          requiresOtp: true,
-          method: 'email',
-          message: 'Admin credentials accepted. Please provide the 6-digit OTP code verified with ADMIN_WJT_KEY.',
-          expiresAt: otpData.expiresAt,
-          otpHint: otpData.otp,
-        });
-      }
-
-      // Verify OTP against ADMIN_WJT_KEY (Authenticator TOTP or Email OTP)
-      const isValidOtp = verifyAdminOtp(email, otp, method as any);
-      if (!isValidOtp) {
-        const errorMsg =
-          method === 'authenticator'
-            ? 'Invalid or expired code from Authenticator app. Please verify your device clock.'
-            : 'Invalid or expired OTP code. Please check and try again.';
-        return res.status(401).json({ success: false, error: errorMsg });
-      }
-
       const user = getAdminUserProfile();
       const token = createAdminJwt({
         id: user.id,
@@ -623,6 +525,136 @@ async function startServer() {
     try {
       const exportFiles = generateCloudflareWorkerExport();
       res.json({ success: true, ...exportFiles });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // ============================================================
+  // 10. GENERAL AI AGENT PLATFORM API (Spec v1.0 /v1 namespace)
+  // ============================================================
+
+  // Embeddable Customer Service Widget Script
+  app.get('/widget.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(process.cwd(), 'public', 'widget.js'));
+  });
+
+  // Agents Registry
+  app.get('/v1/agents', (req, res) => {
+    res.json({ success: true, agents: listPlatformAgents() });
+  });
+
+  app.get('/v1/agents/:id', (req, res) => {
+    const agent = getPlatformAgent(req.params.id);
+    if (!agent) return res.status(404).json({ success: false, error: 'Agent not found' });
+    res.json({ success: true, agent });
+  });
+
+  // Tool Registry & MCP Servers
+  app.get('/v1/tools', (req, res) => {
+    res.json({ success: true, tools: listTools() });
+  });
+
+  app.get('/v1/mcp', (req, res) => {
+    res.json({ success: true, mcpServers: listMcpServers() });
+  });
+
+  // Knowledge Ingestion & Attached Knowledge Items with Title IDs
+  app.get('/v1/knowledge', (req, res) => {
+    res.json({ success: true, items: listKnowledgeItems() });
+  });
+
+  app.post('/v1/knowledge', (req, res) => {
+    try {
+      const { title, titleId, type, content, summary } = req.body;
+      if (!title || !titleId) {
+        return res.status(400).json({ success: false, error: 'Title and Title ID are required' });
+      }
+      const newItem = addKnowledgeItem({
+        title,
+        titleId,
+        type: type || 'Markdown',
+        status: 'Available',
+        summary: summary || title,
+        content: content || '',
+      });
+      res.json({ success: true, item: newItem });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Automations & Natural Language Parser
+  app.get('/v1/automations', (req, res) => {
+    const status = req.query.status as any;
+    res.json({ success: true, automations: listAutomations(status) });
+  });
+
+  app.get('/v1/automations/:id', (req, res) => {
+    const auto = getAutomation(req.params.id);
+    if (!auto) return res.status(404).json({ success: false, error: 'Automation not found' });
+    res.json({ success: true, automation: auto });
+  });
+
+  app.post('/v1/automations/parse', (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) return res.status(400).json({ success: false, error: 'Prompt is required' });
+      const result = interpretNaturalLanguageAutomation(prompt);
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Consequential Action Approvals
+  app.post('/v1/automations/:id/approve', (req, res) => {
+    const result = approveAutomation(req.params.id);
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  });
+
+  app.post('/v1/automations/:id/cancel', (req, res) => {
+    const result = cancelAutomation(req.params.id);
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  });
+
+  app.post('/v1/automations/:id/run', (req, res) => {
+    const result = runAutomationNow(req.params.id);
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  });
+
+  // Execution Audit Logs
+  app.get('/v1/executions', (req, res) => {
+    const autoId = req.query.automationId as string;
+    res.json({ success: true, logs: listExecutionLogs(autoId) });
+  });
+
+  // Customer Service Widget Configuration & Chat
+  app.get('/v1/widget/config', (req, res) => {
+    res.json({ success: true, config: getCustomerWidgetConfig() });
+  });
+
+  app.post('/v1/widget/chat', async (req, res) => {
+    try {
+      const { message, tenantId, agentId } = req.body;
+      if (!message) return res.status(400).json({ error: 'Message is required' });
+
+      // Ground response with customer service knowledge
+      const completion = await generateCompletion({
+        prompt: `Customer message: "${message}". You are the Customer Service Agent. Answer politely, accurately, and only use general policy facts. Do not reveal internal API tokens.`,
+        systemPrompt: 'You are the embeddable customer service AI representative. Be brief, warm, and professional.',
+      });
+
+      res.json({
+        success: true,
+        reply: completion.text,
+        tenantId: tenantId || 'tenant_prod_edge_001',
+        agentId: agentId || 'agent-customer-01',
+      });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }

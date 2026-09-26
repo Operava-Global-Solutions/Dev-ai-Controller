@@ -3,19 +3,85 @@ main = "cloudflare-worker.js"
 compatibility_date = "2026-03-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Workers AI Native Binding
+# ============================================================
+# 1. Cloudflare Workers AI Native Binding
+# ============================================================
 [ai]
 binding = "AI"
 
-# Static Assets Configuration for React Vite SPA
+# ============================================================
+# 2. Cloudflare D1 Relational Database Binding
+# (Tenants, Agents, Permissions, Automations, Approvals, Executions)
+# ============================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "devai_production_db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# ============================================================
+# 3. Cloudflare R2 Document & Knowledge Storage Bucket
+# (Raw ingested files: .md, .txt, .pdf, .json, .html)
+# ============================================================
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "devai-knowledge-docs"
+
+# ============================================================
+# 4. Cloudflare Vectorize Semantic Search Index
+# (Semantic document chunks, vectors, and cosine similarity lookup)
+# ============================================================
+[[vectorize]]
+binding = "VECTOR_INDEX"
+index_name = "devai-knowledge-vectors"
+
+# ============================================================
+# 5. Cloudflare Workers KV Cache & Config
+# (Session tokens, rate limiting counters, tool definitions)
+# ============================================================
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "00000000000000000000000000000000"
+
+# ============================================================
+# 6. Cloudflare Durable Objects Stateful Agent Coordination
+# ============================================================
+[durable_objects]
+bindings = [
+  { name = "AGENT_SESSION", class_name = "AgentSessionDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["AgentSessionDO"]
+
+# ============================================================
+# 7. Static Assets Configuration for React Vite SPA
+# ============================================================
 [site]
 bucket = "./dist"
 
-# Observability & Logging
+# ============================================================
+# 8. Observability & Logging
+# ============================================================
 [observability]
 enabled = true
 head_sampling_rate = 1
 
-# Triggers / Crons (Optional: scheduled health check every 15 minutes)
+# ============================================================
+# 9. Scheduled Workflows & Cron Triggers
+# (Runs scheduled automations, e.g. every 15 minutes)
+# ============================================================
 [triggers]
 crons = ["*/15 * * * *"]
+
+# ============================================================
+# 10. Non-Secret Environment Variables
+# (Secrets like RESEND_API_KEY, GITHUB_TOKEN, ADMIN_PASSWORD
+# are configured via wrangler secret put <NAME>)
+# ============================================================
+[vars]
+ENVIRONMENT = "production"
+TENANT_DEFAULT = "tenant_prod_edge_001"
+PRIMARY_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct"
+FALLBACK_AI_MODEL = "gemini-2.5-flash"
+API_VERSION = "v1"

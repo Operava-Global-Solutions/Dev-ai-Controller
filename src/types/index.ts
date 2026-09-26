@@ -256,3 +256,185 @@ export interface WorkerSimulationResult {
   timestamp: string;
 }
 
+// ============================================================
+// GENERAL AI AGENT PLATFORM TYPES (Specification v1.0)
+// ============================================================
+
+export type AgentRoleType =
+  | 'general'
+  | 'developer'
+  | 'knowledge'
+  | 'customer_service'
+  | 'design'
+  | 'custom';
+
+export interface PlatformAgent {
+  id: string;
+  name: string;
+  type: AgentRoleType;
+  description: string;
+  systemPrompt: string;
+  permissions: string[];
+  enabledTools: string[];
+  mcpServers: string[];
+  tenantId: string;
+  avatarIcon: string;
+  status: 'active' | 'standby' | 'restricted';
+  isExternal?: boolean;
+}
+
+export type ToolRiskLevel = 'read' | 'write' | 'external_side_effect' | 'high_impact';
+
+export interface ToolDefinition {
+  toolId: string;
+  name: string;
+  description: string;
+  provider: 'native' | 'mcp' | 'github' | 'resend' | 'cloudflare' | 'figma';
+  mcpServerId?: string;
+  inputSchema: Record<string, any>;
+  outputSchema?: Record<string, any>;
+  permissions: string[];
+  enabled: boolean;
+  riskLevel: ToolRiskLevel;
+  requiresApproval: boolean;
+}
+
+export interface McpServerConfig {
+  id: string;
+  name: string;
+  category: 'knowledge' | 'github' | 'figma' | 'cloudflare' | 'email' | 'calendar' | 'customer-service' | 'custom';
+  endpoint: string;
+  status: 'connected' | 'disconnected' | 'configuring';
+  toolsCount: number;
+  description: string;
+  permissionsRequired: string[];
+  latencyMs?: number;
+}
+
+export type AutomationStatus =
+  | 'WORKING'
+  | 'DRAFT'
+  | 'PENDING_APPROVAL'
+  | 'SCHEDULED'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'INACTIVE';
+
+export type AutomationTriggerCategory = 'schedule' | 'event' | 'condition' | 'manual';
+
+export interface AutomationTrigger {
+  type: AutomationTriggerCategory;
+  scheduleExpression?: string; // e.g. "31 October 2026 09:00" or "monthly on 31 at 09:00"
+  eventCategory?: 'email_received' | 'webhook_received' | 'file_uploaded' | 'api_event';
+  conditionDescription?: string;
+  humanReadable: string;
+}
+
+export interface AttachedKnowledgeItem {
+  id: string;
+  title: string;
+  titleId: string; // e.g. "monthly-client-email-v1", "company-branding-v2"
+  type: 'HTML' | 'Markdown' | 'Text' | 'JSON' | 'Template';
+  status: 'Available' | 'Pending' | 'Missing';
+  summary?: string;
+  content?: string;
+  updatedAt: string;
+}
+
+export interface EmailAutomationPayload {
+  recipient: string;
+  cc?: string;
+  bcc?: string;
+  replyTo?: string;
+  subject: string;
+  preheader?: string;
+  header?: string;
+  body: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  footer?: string;
+  signature?: string;
+  htmlContent?: string;
+  plainTextContent?: string;
+  variables?: Record<string, string>;
+}
+
+export interface ValidationCheckItem {
+  item: string;
+  passed: boolean;
+  message: string;
+  category: 'knowledge' | 'tool' | 'permission' | 'trigger' | 'template' | 'schedule';
+}
+
+export interface AutomationValidationResult {
+  isReady: boolean;
+  checks: ValidationCheckItem[];
+  missingItems: string[];
+  explanation: string;
+}
+
+export interface AutomationStep {
+  order: number;
+  action: string;
+  description: string;
+  toolId: string;
+  status?: 'pending' | 'completed' | 'failed';
+}
+
+export interface Automation {
+  id: string;
+  automationId: string; // Title ID / Slug e.g. "monthly-client-update-2026"
+  title: string;
+  description: string;
+  status: AutomationStatus;
+  trigger: AutomationTrigger;
+  attachedKnowledge: AttachedKnowledgeItem[];
+  actions: AutomationStep[];
+  emailPayload?: EmailAutomationPayload;
+  validation: AutomationValidationResult;
+  requiresApproval: boolean;
+  approvalStatus?: 'none' | 'pending' | 'approved' | 'cancelled';
+  approvalId?: string;
+  nextScheduledRun?: string;
+  lastExecutedAt?: string;
+  tenantId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutomationExecutionLog {
+  executionId: string;
+  automationId: string;
+  automationTitle: string;
+  tenantId: string;
+  startedAt: string;
+  completedAt?: string;
+  status: 'completed' | 'failed' | 'running';
+  trigger: string;
+  steps: Array<{
+    timestamp: string;
+    label: string;
+    status: 'completed' | 'failed' | 'in_progress';
+  }>;
+  toolCalls: Array<{
+    toolId: string;
+    input: any;
+    resultSummary: string;
+  }>;
+  approvalId?: string;
+  error?: string;
+}
+
+export interface CustomerWidgetConfig {
+  tenantId: string;
+  agentId: string;
+  theme: 'light' | 'dark' | 'auto';
+  language: string;
+  greeting: string;
+  knowledgeScope: string[];
+  embedSnippet: string;
+}
+
+
