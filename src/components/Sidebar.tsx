@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Activity,
   Sparkles,
+  Bot,
   MessageSquare,
   Clock,
   Globe,
@@ -43,6 +44,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'chat',
       label: 'Chat',
       icon: Sparkles,
+    },
+    {
+      id: 'worker',
+      label: 'Worker Agent',
+      icon: Bot,
     },
     {
       id: 'status',

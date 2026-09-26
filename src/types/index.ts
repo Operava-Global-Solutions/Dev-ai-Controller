@@ -211,3 +211,48 @@ export interface LLMDocEntry {
   content: string;
   lastFetched: string;
 }
+
+// Worker Agent (Knowledge & Cloudflare Worker Routing)
+export type WorkerPersona = 'human_rep' | 'ai_assistant' | 'customer_service';
+export type WorkerChannel = 'whatsapp' | 'messenger' | 'email' | 'webchat';
+export type KnowledgeSourceMode = 'internal_only' | 'external_and_internal';
+
+export interface KnowledgeDocument {
+  id: string;
+  title: string;
+  filename: string;
+  format: 'md' | 'txt' | 'json';
+  content: string;
+  sizeBytes: number;
+  updatedAt: string;
+  category: 'faq' | 'policy' | 'specs' | 'rules' | 'custom';
+  isActive: boolean;
+  wordCount?: number;
+}
+
+export interface WorkerAgentConfig {
+  name: string;
+  persona: WorkerPersona;
+  channel: WorkerChannel;
+  knowledgeMode: KnowledgeSourceMode;
+  greetingMessage: string;
+  customInstructions: string;
+  confidenceThreshold: number;
+  activeKnowledgeDocIds: string[];
+  cloudflareRoute: string;
+  enableTypingDelay?: boolean;
+}
+
+export interface WorkerSimulationResult {
+  response: string;
+  channel: WorkerChannel;
+  persona: WorkerPersona;
+  knowledgeMode: KnowledgeSourceMode;
+  referencedDocs: string[];
+  latencyMs: number;
+  tokensUsed?: number;
+  simulatedPayload?: any;
+  routingHeader: string;
+  timestamp: string;
+}
+

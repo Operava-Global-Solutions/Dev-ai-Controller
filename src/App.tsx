@@ -11,6 +11,8 @@ import { ExportKit } from './components/ExportKit.js';
 import { DevaiChat } from './components/DevaiChat.js';
 import { ChatHistory } from './components/ChatHistory.js';
 import { KnowledgeCenter } from './components/KnowledgeCenter.js';
+import { WorkerAgent } from './components/WorkerAgent.js';
+import { AdminProtectiveWrapper } from './components/AdminProtectiveWrapper.js';
 import type {
   ServiceStatusInfo,
   ServiceType,
@@ -215,8 +217,25 @@ export default function App() {
     }
   };
 
+  // Fetch Auth User
+  const fetchAuthUser = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch('/api/auth/me', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setCurrentUser(data.user);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch auth user:', err);
+    }
+  };
+
   // Initial Data Load
   useEffect(() => {
+    fetchAuthUser();
     fetchStatus();
     fetchDeployments();
     fetchNotifications();
@@ -291,122 +310,127 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0f1117] text-[#1a1d24] dark:text-[#f0f3f6] flex flex-col antialiased">
-      {/* Top Header */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-        isSidebarOpen={isSidebarOpen}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-        currentUser={currentUser}
-      />
-
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar Navigation */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen((prev) => !prev)}
+    <AdminProtectiveWrapper>
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0f1117] text-[#1a1d24] dark:text-[#f0f3f6] flex flex-col antialiased">
+        {/* Top Header */}
+        <Header
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          isSidebarOpen={isSidebarOpen}
           isDarkMode={isDarkMode}
           onToggleDarkMode={toggleDarkMode}
           currentUser={currentUser}
+          onUserUpdate={setCurrentUser}
         />
 
-        {/* Main Content View */}
-        <main
-          className={`flex-1 ${
-            activeTab === 'chat'
-              ? 'flex flex-col h-[calc(100vh-65px)] overflow-hidden p-2 sm:p-4'
-              : 'overflow-y-auto p-4 sm:p-6 lg:p-8'
-          }`}
-        >
-          <div
-            className={`w-full max-w-6xl mx-auto ${
-              activeTab === 'chat' ? 'flex-1 flex flex-col h-full min-h-0' : ''
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Sidebar Navigation */}
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onToggle={() => setIsSidebarOpen((prev) => !prev)}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
+            currentUser={currentUser}
+          />
+
+          {/* Main Content View */}
+          <main
+            className={`flex-1 chat-dot-bg ${
+              activeTab === 'chat'
+                ? 'flex flex-col h-[calc(100vh-65px)] overflow-hidden p-2 sm:p-4'
+                : 'overflow-y-auto p-4 sm:p-6 lg:p-8'
             }`}
           >
-            {activeTab === 'status' && (
-              <StatusDashboard
-                services={services}
-                systemSummary={systemSummary}
-                onRefresh={fetchStatus}
-                isRefreshing={isRefreshingStatus}
-                onNavigateToCoding={() => setActiveTab('coding')}
-                onNavigateToDeployments={() => setActiveTab('deployments')}
-                onNavigateToNotifications={() => setActiveTab('notifications')}
-              />
-            )}
+            <div
+              className={`w-full max-w-6xl mx-auto ${
+                activeTab === 'chat' ? 'flex-1 flex flex-col h-full min-h-0' : ''
+              }`}
+            >
+              {activeTab === 'status' && (
+                <StatusDashboard
+                  services={services}
+                  systemSummary={systemSummary}
+                  onRefresh={fetchStatus}
+                  isRefreshing={isRefreshingStatus}
+                  onNavigateToCoding={() => setActiveTab('coding')}
+                  onNavigateToDeployments={() => setActiveTab('deployments')}
+                  onNavigateToNotifications={() => setActiveTab('notifications')}
+                />
+              )}
 
-            {activeTab === 'chat' && (
-              <DevaiChat
-                activeSessionId={selectedChatSessionId}
-                onSelectSession={setSelectedChatSessionId}
-                onNavigateToHistory={() => setActiveTab('chathistory')}
-                onNavigateToKnowledge={() => setActiveTab('knowledge')}
-              />
-            )}
+              {activeTab === 'worker' && <WorkerAgent />}
 
-            {activeTab === 'chathistory' && (
-              <ChatHistory
-                onOpenSession={(id) => {
-                  setSelectedChatSessionId(id);
-                  setActiveTab('chat');
-                }}
-                onCreateNewChat={async () => {
-                  try {
-                    const res = await fetch('/api/chat/sessions', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ title: 'Fresh Chat' }),
-                    });
-                    const data = await res.json();
-                    if (data.success && data.session) {
-                      setSelectedChatSessionId(data.session.id);
+              {activeTab === 'chat' && (
+                <DevaiChat
+                  activeSessionId={selectedChatSessionId}
+                  onSelectSession={setSelectedChatSessionId}
+                  onNavigateToHistory={() => setActiveTab('chathistory')}
+                  onNavigateToKnowledge={() => setActiveTab('knowledge')}
+                />
+              )}
+
+              {activeTab === 'chathistory' && (
+                <ChatHistory
+                  onOpenSession={(id) => {
+                    setSelectedChatSessionId(id);
+                    setActiveTab('chat');
+                  }}
+                  onCreateNewChat={async () => {
+                    try {
+                      const res = await fetch('/api/chat/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: 'Fresh Chat' }),
+                      });
+                      const data = await res.json();
+                      if (data.success && data.session) {
+                        setSelectedChatSessionId(data.session.id);
+                      }
+                    } catch (e) {
+                      console.error('Failed to create fresh chat:', e);
                     }
-                  } catch (e) {
-                    console.error('Failed to create fresh chat:', e);
-                  }
-                  setActiveTab('chat');
-                }}
-              />
-            )}
+                    setActiveTab('chat');
+                  }}
+                />
+              )}
 
-            {activeTab === 'coding' && (
-              <CodingAgent
-                tasks={codingTasks}
-                onExecuteTask={handleExecuteCodingTask}
-                isLoading={isExecutingCodeTask}
-              />
-            )}
+              {activeTab === 'coding' && (
+                <CodingAgent
+                  tasks={codingTasks}
+                  onExecuteTask={handleExecuteCodingTask}
+                  isLoading={isExecutingCodeTask}
+                />
+              )}
 
-            {activeTab === 'deployments' && (
-              <DeploymentsMonitor
-                deployments={deployments}
-                onTriggerDeploy={handleTriggerDeploy}
-                onRollbackDeploy={handleRollbackDeploy}
-                isLoading={isDeploying}
-              />
-            )}
+              {activeTab === 'deployments' && (
+                <DeploymentsMonitor
+                  deployments={deployments}
+                  onTriggerDeploy={handleTriggerDeploy}
+                  onRollbackDeploy={handleRollbackDeploy}
+                  isLoading={isDeploying}
+                />
+              )}
 
-            {activeTab === 'notifications' && (
-              <NotificationsFeed notifications={notifications} />
-            )}
+              {activeTab === 'notifications' && (
+                <NotificationsFeed notifications={notifications} />
+              )}
 
-            {activeTab === 'logs' && (
-              <AuditLogs logs={logs} onRefresh={fetchLogs} />
-            )}
+              {activeTab === 'logs' && (
+                <AuditLogs logs={logs} onRefresh={fetchLogs} />
+              )}
 
-            {activeTab === 'knowledge' && <KnowledgeCenter />}
+              {activeTab === 'knowledge' && <KnowledgeCenter />}
 
-            {activeTab === 'docs' && <DocsViewer />}
+              {activeTab === 'docs' && <DocsViewer />}
 
-            {activeTab === 'export' && <ExportKit />}
-          </div>
-        </main>
+              {activeTab === 'export' && <ExportKit />}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminProtectiveWrapper>
   );
 }

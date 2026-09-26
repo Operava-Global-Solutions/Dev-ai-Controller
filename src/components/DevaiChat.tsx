@@ -25,6 +25,21 @@ import type {
   ChatSession,
 } from '../types/index.js';
 
+function formatCleanText(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/\*{3}([^*]+)\*{3}/g, '$1')
+    .replace(/\*{2}([^*]+)\*{2}/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\*{1,3}/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^[\s-]{3,}$/gm, '')
+    .replace(/-\s*-\s*-+/g, '')
+    .replace(/-\s*-/g, '—')
+    .replace(/^[\t ]*[-*]\s+/gm, '• ')
+    .trim();
+}
+
 interface DevaiChatProps {
   activeSessionId?: string | null;
   onSelectSession?: (sessionId: string | null) => void;
@@ -450,7 +465,7 @@ export const DevaiChat: React.FC<DevaiChatProps> = ({
                   <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-xs px-4 py-3 bg-[#f0f2f5] dark:bg-[#202530] text-[#1a1d24] dark:text-[#f0f3f6] border border-[#e2e4e9] dark:border-[#2c3240] text-xs leading-relaxed shadow-2xs font-normal">
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{formatCleanText(msg.content)}</p>
                 </div>
               </div>
             );
@@ -476,7 +491,7 @@ export const DevaiChat: React.FC<DevaiChatProps> = ({
                   </div>
 
                   <button
-                    onClick={() => handleCopyContent(msg.content, msg.id)}
+                    onClick={() => handleCopyContent(formatCleanText(msg.content), msg.id)}
                     className="p-1 rounded-md text-[#80868b] hover:text-[#1a1d24] dark:hover:text-[#f0f3f6] hover:bg-[#f0f2f5] dark:hover:bg-[#1f242e] transition-colors cursor-pointer"
                     title="Copy response"
                   >
@@ -496,7 +511,7 @@ export const DevaiChat: React.FC<DevaiChatProps> = ({
                       : 'text-[#1a1d24] dark:text-[#e4e7eb]'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{formatCleanText(msg.content)}</p>
                 </div>
 
                 {/* Multi-step Execution Trace (Cloudflare AI Collapsible Pill) */}
@@ -598,7 +613,7 @@ export const DevaiChat: React.FC<DevaiChatProps> = ({
                     }`}
                   />
                   <span className={thinkingStep >= 1 ? 'text-[#1a1d24] dark:text-[#f0f3f6] font-medium' : ''}>
-                    2. Querying Cloudflare Workers AI edge runtime (@cf/llama-3.3-70b)
+                    2. Querying Cloudflare Workers edge runtime
                   </span>
                   {thinkingStep === 1 && <span className="text-[10px] text-purple-500 animate-pulse font-mono">active</span>}
                 </div>

@@ -18,6 +18,21 @@ import {
 } from 'lucide-react';
 import type { ChatSession, AiChatMessage } from '../types/index.js';
 
+function formatCleanText(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/\*{3}([^*]+)\*{3}/g, '$1')
+    .replace(/\*{2}([^*]+)\*{2}/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\*{1,3}/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^[\s-]{3,}$/gm, '')
+    .replace(/-\s*-\s*-+/g, '')
+    .replace(/-\s*-/g, '—')
+    .replace(/^[\t ]*[-*]\s+/gm, '• ')
+    .trim();
+}
+
 interface ChatHistoryProps {
   onOpenSession: (sessionId: string) => void;
   onCreateNewChat: () => void;
@@ -368,7 +383,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                       <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
 
-                    <p className="leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                    <p className="leading-relaxed whitespace-pre-wrap">{formatCleanText(m.content)}</p>
 
                     {/* Step Traces */}
                     {m.steps && m.steps.length > 0 && (
