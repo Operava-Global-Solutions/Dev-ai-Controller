@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Compressed - same sizes - nearer -->
+  <g fill="#F6821F">
+    <!-- 3 connectors - same thickness, short -->
+    <path d="M60 60 L60 32.5" stroke="#F6821F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M60 60 L36.2 73.75" stroke="#F6821F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M60 60 L83.8 73.75" stroke="#F6821F" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Center dot -->
+    <circle cx="60" cy="60" r="5.5"/>
+    
+    <!-- 3 outer circles - ALL SAME SIZE, compressed close -->
+    <circle cx="60" cy="26" r="13"/>
+    <circle cx="32" cy="76" r="13"/>
+    <circle cx="88" cy="76" r="13"/>
+  </g>
+</svg>

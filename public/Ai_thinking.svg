@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 200 200" fill="none">
+  <style>
+    :root { --orange: #F6821F; }
+    .c { fill: var(--orange); }
+    .line { stroke: var(--orange); stroke-width: 3.5; stroke-linecap: round; }
+    /* Bounce from center: each ball moves toward center then out */
+    @keyframes bounceFromCenter1 {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      15% { transform: translate(0, 38px) scale(0.82); } /* move to center */
+      30% { transform: translate(0,0) scale(1); }
+    }
+    @keyframes bounceFromCenter2 {
+      0%, 33%, 100% { transform: translate(0,0) scale(1); }
+      48% { transform: translate(28px, -22px) scale(0.82); }
+      63% { transform: translate(0,0) scale(1); }
+    }
+    @keyframes bounceFromCenter3 {
+      0%, 66%, 100% { transform: translate(0,0) scale(1); }
+      81% { transform: translate(-28px, -22px) scale(0.82); }
+      96% { transform: translate(0,0) scale(1); }
+    }
+    @keyframes linePulse1 {
+      0%, 100% { opacity: 1; }
+      15% { opacity: 0.25; }
+      30% { opacity: 1; }
+    }
+    @keyframes linePulse2 {
+      0%, 33%, 100% { opacity: 1; }
+      48% { opacity: 0.25; }
+      63% { opacity: 1; }
+    }
+    @keyframes linePulse3 {
+      0%, 66%, 100% { opacity: 1; }
+      81% { opacity: 0.25; }
+      96% { opacity: 1; }
+    }
+    #ball1 { animation: bounceFromCenter1 2.1s ease-in-out infinite; transform-origin: 100px 100px; }
+    #ball2 { animation: bounceFromCenter2 2.1s ease-in-out infinite; transform-origin: 100px 100px; }
+    #ball3 { animation: bounceFromCenter3 2.1s ease-in-out infinite; transform-origin: 100px 100px; }
+    #line1 { animation: linePulse1 2.1s ease-in-out infinite; }
+    #line2 { animation: linePulse2 2.1s ease-in-out infinite; }
+    #line3 { animation: linePulse3 2.1s ease-in-out infinite; }
+  </style>
+  <!-- exact layout like your PNG: top big, bottom-left big, bottom-right medium-small -->
+  <line id="line1" class="line" x1="100" y1="100" x2="100" y2="44"/>
+  <line id="line2" class="line" x1="100" y1="100" x2="52" y2="136"/>
+  <line id="line3" class="line" x1="100" y1="100" x2="148" y2="136"/>
+
+  <circle cx="100" cy="100" r="10" class="c" />
+
+  <g id="ball1">
+    <circle cx="100" cy="32" r="34" class="c"/>
+  </g>
+  <g id="ball2">
+    <circle cx="42" cy="146" r="31" class="c"/>
+  </g>
+  <g id="ball3">
+    <circle cx="158" cy="146" r="21" class="c"/>
+  </g>
+</svg>
