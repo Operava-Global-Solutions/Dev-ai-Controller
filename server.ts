@@ -574,7 +574,7 @@ async function startServer() {
     res.json({ success: true, items: compatibleItems });
   });
 
-  app.post('/v1/agents/:id/knowledge/link', (req, res) => {
+  app.post('/v1/agents/:id/knowledge/link', requireAdminAuth, (req, res) => {
     try {
       const { titleId, purpose } = req.body;
       if (!titleId) return res.status(400).json({ success: false, error: 'titleId is required' });
@@ -586,7 +586,7 @@ async function startServer() {
     }
   });
 
-  app.post('/v1/agents/:id/knowledge/unlink', (req, res) => {
+  app.post('/v1/agents/:id/knowledge/unlink', requireAdminAuth, (req, res) => {
     try {
       const { titleId } = req.body;
       if (!titleId) return res.status(400).json({ success: false, error: 'titleId is required' });
@@ -605,9 +605,22 @@ async function startServer() {
       if (!agent) return res.status(404).json({ success: false, error: 'Agent not found' });
       const { prompt } = req.body;
       if (!prompt || typeof prompt !== 'string') return res.status(400).json({ success: false, error: 'prompt is required' });
+      if (agent.status !== 'active') return res.status(409).json({ success: false, error: 'Agent is not active' });
+      const tools = listTools();
+      const missingTools = agent.enabledTools.filter((id) => !tools.some((tool) => tool.id === id));
+      if (missingTools.length) return res.status(503).json({ success: false, error: 'Agent capability contract is incomplete', missingTools });
+      const groundedRefs = getAgentKnowledgeReferences(agent.id);
+      const context = groundedRefs.length
+        ? '\n\nApproved knowledge references:\n' + groundedRefs.map((ref) => `- ${ref.titleId}: ${ref.title} — ${ref.purpose}`).join('\n')
+        : '';
       const started = Date.now();
-      const completion = await generateCompletion({ prompt, systemPrompt: agent.systemPrompt });
-      res.json({ success: true, agentId: agent.id, agentName: agent.name, response: completion.text, provider: completion.provider, model: completion.model, latencyMs: Date.now() - started, tokensUsed: completion.tokensUsed });
+      const completion = await generateCompletion({
+        prompt,
+        systemPrompt: agent.systemPrompt + context + '\n\nProduction rules: never claim a tool ran unless its real result is present; never fabricate verification, approvals, resources, IDs, latency, or provider success; clearly state when an external action requires operator approval.',
+      });
+      const latencyMs = Date.now() - started;
+      await addAuditLog({ action: 'agent.execute', service: 'ai', status: 'success', durationMs: latencyMs, user: (req as any).user?.email, summary: `${agent.name} executed through ${completion.provider}/${completion.model}`, responseData: { agentId: agent.id, provider: completion.provider, model: completion.model, tokensUsed: completion.tokensUsed } });
+      res.json({ success: true, agentId: agent.id, agentName: agent.name, response: completion.text, provider: completion.provider, model: completion.model, latencyMs, tokensUsed: completion.tokensUsed, groundedKnowledge: groundedRefs.map((ref) => ref.titleId), capabilityContract: { enabledTools: agent.enabledTools, permissions: agent.permissions } });
     } catch (err: any) {
       res.status(502).json({ success: false, error: err.message });
     }
@@ -627,7 +640,7 @@ async function startServer() {
     res.json({ success: true, items: listKnowledgeItems() });
   });
 
-  app.post('/v1/knowledge', (req, res) => {
+  app.post('/v1/knowledge', requireAdminAuth, (req, res) => {
     try {
       const { title, titleId, type, content, summary } = req.body;
       if (!title || !titleId) {
