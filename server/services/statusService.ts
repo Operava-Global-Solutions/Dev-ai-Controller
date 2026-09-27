@@ -1,7 +1,6 @@
 import type { ServiceStatusInfo, ServiceType } from '../../src/types/index.js';
 import { testGitHubToken } from './github.js';
 import { testResendToken } from './resend.js';
-import { testSupabaseConnection } from './supabaseService.js';
 import { testCloudflareConnection } from './cloudflareService.js';
 
 export async function getServicesStatus(): Promise<{
@@ -36,27 +35,6 @@ export async function getServicesStatus(): Promise<{
       'Secrets Secured': 5,
     },
     features: ['Serverless Runtime', 'Cloudflare Workers AI', 'Request Routing', 'Zero-Trust Secrets'],
-  };
-
-  // 2. Supabase Check
-  const sbStart = Date.now();
-  const sbRes = await testSupabaseConnection(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY);
-  const sbLatency = Date.now() - sbStart;
-  const sbStatus: ServiceStatusInfo = {
-    id: 'supabase',
-    name: 'Supabase',
-    role: 'Authentication & Central Database',
-    status: sbRes.valid ? 'operational' : 'degraded',
-    latencyMs: sbLatency,
-    lastChecked: timestamp,
-    version: 'PostgreSQL 15.6',
-    details: sbRes.message || 'Supabase Auth session validator and PostgreSQL database connected with RLS policies.',
-    metrics: {
-      'Auth Sessions': 'Active',
-      'RLS Tables': 6,
-      'Connection Pool': 'pgBouncer 5432',
-    },
-    features: ['Supabase Auth', 'PostgreSQL Database', 'Row Level Security', 'Audit Trail Storage'],
   };
 
   // 3. GitHub Check
@@ -121,14 +99,13 @@ export async function getServicesStatus(): Promise<{
     features: ['Secondary Fallback AI', 'Automatic Failover', 'Zero-Downtime Reasoning', 'Model Redundancy'],
   };
 
-  const allOperational = [cfStatus, sbStatus, ghStatus, reStatus].every(
+  const allOperational = [cfStatus, ghStatus, reStatus].every(
     (s) => s.status === 'operational'
   );
 
   return {
     services: {
       cloudflare: cfStatus,
-      supabase: sbStatus,
       github: ghStatus,
       resend: reStatus,
       openai: openAiStatus,
