@@ -11,7 +11,7 @@ export interface AiCompletionOptions {
 
 export interface AiCompletionResult {
   text: string;
-  provider: 'cloudflare_ai' | 'openai_fallback';
+  provider: 'cloudflare_ai' | 'openai_fallback' | 'gemini_fallback';
   model: string;
   latencyMs: number;
   tokensUsed?: number;
@@ -127,7 +127,7 @@ export async function generateCompletion(
     }
   }
 
-  // 3. Built-in Server Gemini AI fallback (ensures production reliability in sandbox)
+  // 3. Optional production Gemini fallback. Provider identity must remain truthful.
   const gemini = getGemini();
   if (gemini) {
     try {
@@ -138,8 +138,8 @@ export async function generateCompletion(
       });
       return {
         text: cleanResponseText(res.text || ''),
-        provider: 'cloudflare_ai',
-        model: '@cf/meta/llama-3.3-70b-instruct (Cloudflare Gateway)',
+        provider: 'gemini_fallback',
+        model: 'gemini-2.5-flash',
         latencyMs: Date.now() - startTime,
       };
     } catch (err) {
@@ -147,21 +147,6 @@ export async function generateCompletion(
     }
   }
 
-  // Default simulated high-intelligence coding assistant response
-  const defaultText = [
-    'Cloudflare Workers AI (Llama 3.3 70B)',
-    '',
-    'Successfully analyzed codebase and executed requested task.',
-    'Execution Plan:',
-    '• Inspected repository architecture and verified bindings',
-    '• Generated code modifications without breaking changes',
-    '• Prepared branch and verified zero-trust security boundary',
-  ].join('\n');
-
-  return {
-    text: cleanResponseText(defaultText),
-    provider: 'cloudflare_ai',
-    model: '@cf/meta/llama-3.3-70b-instruct',
-    latencyMs: Date.now() - startTime,
-  };
+  // Production must fail closed. Never fabricate an AI success response.
+  throw new Error('No production AI provider is available. Configure Cloudflare Workers AI, OPENAI_API_KEY, or GEMINI_API_KEY and verify provider connectivity.');
 }
