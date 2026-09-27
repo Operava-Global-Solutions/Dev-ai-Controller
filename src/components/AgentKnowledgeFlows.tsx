@@ -111,10 +111,10 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
 
   // Run a real authenticated production execution through the selected agent.
   const handleExecuteFlow = async () => {
-    if (!selectedAgent || isSimulatingFlow) return;
-    setIsSimulatingFlow(true);
-    setSimulationResult(null);
-    setCurrentSimStageIndex(-1);
+    if (!selectedAgent || isExecutingFlow) return;
+    setIsExecutingFlow(true);
+    setExecutionReceipt(null);
+    setCurrentExecutionStageIndex(-1);
     try {
       const token = localStorage.getItem('admin_token');
       const res = await fetch(`/v1/agents/${selectedAgent.id}/execute`, {
@@ -132,7 +132,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
       console.error('Production agent execution failed:', e);
       showTemporaryNotice(e?.message || 'Production agent execution failed');
     } finally {
-      setIsSimulatingFlow(false);
+      setIsExecutingFlow(false);
     }
   };
 
@@ -296,8 +296,8 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                 key={agent.id}
                 onClick={() => {
                   setSelectedAgentId(agent.id);
-                  setSimulationResult(null);
-                  setCurrentSimStageIndex(-1);
+                  setExecutionReceipt(null);
+                  setCurrentExecutionStageIndex(-1);
                 }}
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer space-y-1.5 ${
                   isSelected
@@ -364,16 +364,16 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
 
             <div className="flex items-center space-x-2 shrink-0">
               <button
-                onClick={handleSimulateFlow}
-                disabled={isSimulatingFlow}
+                onClick={handleExecuteFlow}
+                disabled={isExecutingFlow}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 transition-opacity flex items-center space-x-2 shadow-xs cursor-pointer disabled:opacity-60"
               >
-                {isSimulatingFlow ? (
+                {isExecutingFlow ? (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Play className="h-3.5 w-3.5 fill-current" />
                 )}
-                <span>{isSimulatingFlow ? 'Executing Production Agent...' : 'Run Production Agent'}</span>
+                <span>{isExecutingFlow ? 'Executing Production Agent...' : 'Run Production Agent'}</span>
               </button>
             </div>
           </div>
@@ -494,8 +494,8 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
               {canonicalStepsList.map((step) => {
                 const StepIcon = step.icon;
                 const isExecuted =
-                  simulationResult !== null || (currentSimStageIndex >= step.num - 1 && isSimulatingFlow);
-                const isCurrentlyActive = currentSimStageIndex === step.num - 1 && isSimulatingFlow;
+                  executionReceipt !== null || (currentExecutionStageIndex >= step.num - 1 && isExecutingFlow);
+                const isCurrentlyActive = currentExecutionStageIndex === step.num - 1 && isExecutingFlow;
 
                 return (
                   <div
@@ -531,13 +531,13 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
           </div>
 
           {/* Production Execution Receipt */}
-          {simulationResult && (
+          {executionReceipt && (
             <div className="p-4 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs space-y-3.5 shadow-xs animate-in fade-in">
               <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-emerald-200 dark:border-emerald-800/80">
                 <span className="flex items-center space-x-2 text-emerald-900 dark:text-emerald-100 font-bold text-sm">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                   <span>
-                    Production Agent Execution Complete ({simulationResult.totalDurationMs}ms / Budget: &lt;{simulationResult.slaTargetMs}ms)
+                    Production Agent Execution Complete ({executionReceipt.totalDurationMs}ms / Budget: &lt;{executionReceipt.slaTargetMs}ms)
                   </span>
                 </span>
                 <div className="flex items-center space-x-2">
@@ -559,7 +559,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                     <span>Step 4: Approval Gate Token</span>
                   </div>
                   <div className="font-mono text-[10px] text-purple-700 dark:text-purple-300 font-bold break-all">
-                    {simulationResult.approvalId}
+                    {executionReceipt.approvalId}
                   </div>
                   <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">
                     Operator clearance validated before dispatching mutating side-effects.
@@ -573,10 +573,10 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                     <span>Step 6: Resource Verification</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                    {simulationResult.verification.actualResourcesSummary}
+                    {executionReceipt.verification.actualResourcesSummary}
                   </div>
                   <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">
-                    {simulationResult.verification.expectedResourcesSummary}
+                    {executionReceipt.verification.expectedResourcesSummary}
                   </p>
                 </div>
 
@@ -588,7 +588,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                       <span>Step 7: SHA-256 Audit Hash</span>
                     </span>
                     <button
-                      onClick={() => handleCopyAuditHash(simulationResult.auditHash)}
+                      onClick={() => handleCopyAuditHash(executionReceipt.auditHash)}
                       className="text-[10px] font-mono text-purple-600 hover:text-purple-800 flex items-center space-x-1 cursor-pointer"
                     >
                       {copiedHash ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
@@ -596,10 +596,10 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                     </button>
                   </div>
                   <div className="font-mono text-[9px] text-[#1a1d24] dark:text-[#c9d1d9] bg-[#f0f2f5] dark:bg-[#181c24] p-1.5 rounded truncate">
-                    {simulationResult.auditHash}
+                    {executionReceipt.auditHash}
                   </div>
                   <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">
-                    Persisted to audit ledger: ID <code className="font-mono">{simulationResult.auditLogId}</code>
+                    Persisted to audit ledger: ID <code className="font-mono">{executionReceipt.auditLogId}</code>
                   </p>
                 </div>
               </div>
@@ -609,8 +609,8 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
           {/* Sequential Stage Cards */}
           <div className="space-y-3">
             {selectedAgent.structureFlow.stages.map((stage, idx) => {
-              const isSimActive = currentSimStageIndex === idx;
-              const isSimDone = currentSimStageIndex > idx || (simulationResult !== null && !isSimulatingFlow);
+              const isSimActive = currentExecutionStageIndex === idx;
+              const isSimDone = currentExecutionStageIndex > idx || (executionReceipt !== null && !isExecutingFlow);
 
               return (
                 <div
