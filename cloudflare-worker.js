@@ -18,7 +18,9 @@
  *   - GITHUB_TOKEN: GitHub REST API v3
  *   - CLOUDFLARE_API_TOKEN: Cloudflare Deployment & Zone Control
  *   - CLOUDFLARE_ACCOUNT_ID: Cloudflare Account ID
+ *   - ADMIN_EMAIL: Administrator login email
  *   - ADMIN_PASSWORD: Administrator Access Secret
+ *   - ADMIN_JWT_KEY: Administrator session/OTP signing secret
  *   - WORKER_SECRET: AES-256 Vault Encryption Seed
  */
 
@@ -28,6 +30,90 @@ async function sha256Hex(message) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Cloudflare-native admin authentication helpers
+const textEncoder = new TextEncoder();
+
+function base64Url(bytes) {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function decodeBase64Url(value) {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  const binary = atob(base64);
+  return Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+}
+
+async function hmacSha256(secret, value) {
+  const key = await crypto.subtle.importKey('raw', textEncoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, textEncoder.encode(value)));
+}
+
+async function createAdminToken(env) {
+  const secret = env.ADMIN_JWT_KEY || env.JWT_SECRET || env.WORKER_SECRET;
+  if (!secret) throw new Error('Admin session signing secret is not configured');
+  const header = base64Url(textEncoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+  const now = Math.floor(Date.now() / 1000);
+  const payload = base64Url(textEncoder.encode(JSON.stringify({
+    sub: 'devai-admin',
+    email: env.ADMIN_EMAIL || '',
+    role: 'Developer / Operator',
+    iat: now,
+    exp: now + 60 * 60 * 24 * 7,
+  })));
+  const signature = base64Url(await hmacSha256(secret, `${header}.${payload}`));
+  return `${header}.${payload}.${signature}`;
+}
+
+async function verifyAdminToken(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  if (!auth.startsWith('Bearer ')) return null;
+  const token = auth.slice(7).trim();
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const secret = env.ADMIN_JWT_KEY || env.JWT_SECRET || env.WORKER_SECRET;
+  if (!secret) return null;
+  const expected = await hmacSha256(secret, `${parts[0]}.${parts[1]}`);
+  const supplied = decodeBase64Url(parts[2]);
+  if (expected.length !== supplied.length) return null;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) mismatch |= expected[i] ^ supplied[i];
+  if (mismatch !== 0) return null;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
+    if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+async function emailOtp(env, email, step = Math.floor(Date.now() / 300000)) {
+  const secret = env.ADMIN_JWT_KEY || env.JWT_SECRET || env.WORKER_SECRET;
+  if (!secret) throw new Error('Admin OTP secret is not configured');
+  const digest = await hmacSha256(secret, `email-otp:${email.toLowerCase().trim()}:${step}`);
+  const number = (((digest[0] << 24) | (digest[1] << 16) | (digest[2] << 8) | digest[3]) >>> 0) % 900000 + 100000;
+  return String(number).padStart(6, '0');
+}
+
+async function verifyEmailOtp(env, email, candidate) {
+  if (!/^\d{6}$/.test(String(candidate || '').trim())) return false;
+  const step = Math.floor(Date.now() / 300000);
+  return candidate === await emailOtp(env, email, step) || candidate === await emailOtp(env, email, step - 1);
+}
+
+function adminProfile(env) {
+  return {
+    id: 'devai-admin',
+    email: env.ADMIN_EMAIL || '',
+    name: 'Dev’ai Operator',
+    role: 'Developer / Operator',
+    sessionValid: true,
+    lastSignInAt: new Date().toISOString(),
+  };
 }
 
 // ============================================================
@@ -325,6 +411,54 @@ export default {
     }
 
     try {
+      // -------------------------------------------------------------
+      // ADMIN AUTHENTICATION (/api/auth/*)
+      // -------------------------------------------------------------
+      if (url.pathname === '/api/auth/request-otp' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const email = String(body.email || '').toLowerCase().trim();
+        if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD || !email || email !== String(env.ADMIN_EMAIL).toLowerCase().trim() || body.password !== env.ADMIN_PASSWORD) {
+          return new Response(JSON.stringify({ success: false, error: 'Invalid credentials' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        if (!env.RESEND_API_KEY) {
+          return new Response(JSON.stringify({ success: false, error: 'Email OTP provider is not configured' }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const otp = await emailOtp(env, email);
+        const mail = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: env.RESEND_FROM_EMAIL || 'Devai Controller <onboarding@resend.dev>',
+            to: [email],
+            subject: 'Your Dev’ai Controller verification code',
+            text: `Your verification code is ${otp}. It expires shortly.`,
+          }),
+        });
+        if (!mail.ok) return new Response(JSON.stringify({ success: false, error: 'Email OTP delivery failed' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ success: true, expiresInSeconds: 300 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      if (url.pathname === '/api/auth/login' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const email = String(body.email || '').toLowerCase().trim();
+        const validCredentials = Boolean(env.ADMIN_EMAIL && env.ADMIN_PASSWORD && email === String(env.ADMIN_EMAIL).toLowerCase().trim() && body.password === env.ADMIN_PASSWORD);
+        if (!validCredentials) return new Response(JSON.stringify({ success: false, error: 'Invalid credentials' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (body.method !== 'email') return new Response(JSON.stringify({ success: false, error: 'Cloudflare login currently requires email OTP' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!(await verifyEmailOtp(env, email, String(body.otp || '').trim()))) return new Response(JSON.stringify({ success: false, error: 'Invalid verification code' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        const token = await createAdminToken(env);
+        return new Response(JSON.stringify({ success: true, token, user: adminProfile(env) }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      if ((url.pathname === '/api/auth/me' || url.pathname === '/api/auth/verify-session') && request.method === 'GET') {
+        const session = await verifyAdminToken(request, env);
+        if (!session) return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ success: true, valid: true, user: { ...adminProfile(env), email: session.email || env.ADMIN_EMAIL } }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      if (url.pathname === '/api/auth/logout' && request.method === 'POST') {
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // -------------------------------------------------------------
       // Static Embeddable Customer Service Widget (/widget.js)
       // -------------------------------------------------------------
@@ -632,6 +766,11 @@ export default {
             '/v1/executions',
             '/v1/widget/chat',
             '/widget.js',
+            '/api/auth/request-otp',
+            '/api/auth/login',
+            '/api/auth/me',
+            '/api/auth/verify-session',
+            '/api/auth/logout',
             '/api/health',
             '/api/status',
             '/api/coding/execute',
