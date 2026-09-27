@@ -18,8 +18,6 @@
  *   - GITHUB_TOKEN: GitHub REST API v3
  *   - CLOUDFLARE_API_TOKEN: Cloudflare Deployment & Zone Control
  *   - CLOUDFLARE_ACCOUNT_ID: Cloudflare Account ID
- *   - SUPABASE_URL: Central Supabase PostgreSQL URL
- *   - SUPABASE_SERVICE_ROLE_KEY: Supabase Service Role Key
  *   - ADMIN_PASSWORD: Administrator Access Secret
  *   - WORKER_SECRET: AES-256 Vault Encryption Seed
  */
@@ -249,8 +247,6 @@ const PLATFORM_AGENTS = [
   },
 ];
 
-// In-memory simulation execution store for standalone edge worker
-const inMemoryLogs = [];
 
 // ============================================================
 // 3. PRIMARY CLOUDFLARE WORKER ROUTER
@@ -291,7 +287,7 @@ export default {
       if (url.pathname === '/api/health') {
         return new Response(
           JSON.stringify({
-            status: 'operational',
+            status: Object.values({ ai: Boolean(env.AI), db: Boolean(env.DB), storage: Boolean(env.STORAGE), vector: Boolean(env.VECTOR_INDEX), kv: Boolean(env.CONFIG_KV), durable: Boolean(env.AGENT_SESSION) }).every(Boolean) ? 'operational' : 'degraded',
             platform: 'General AI Agent Platform',
             version: '2.5.0',
             governanceStandard: '7_STEP_CANONICAL_LIFECYCLE',
@@ -320,7 +316,11 @@ export default {
             success: true,
             services: {
               cloudflare: { id: 'cloudflare', name: 'Cloudflare', status: 'operational', role: 'Edge Runtime & Workers AI' },
-              supabase: { id: 'supabase', name: 'Supabase PostgreSQL', status: 'operational', role: 'Audit Logs & RLS' },
+              d1: { id: 'd1', name: 'Cloudflare D1', status: env.DB ? 'operational' : 'degraded', role: 'Relational state, automations, approvals & audit ledger' },
+              r2: { id: 'r2', name: 'Cloudflare R2', status: env.STORAGE ? 'operational' : 'degraded', role: 'Knowledge document object storage' },
+              vectorize: { id: 'vectorize', name: 'Cloudflare Vectorize', status: env.VECTOR_INDEX ? 'operational' : 'degraded', role: 'Semantic knowledge retrieval' },
+              kv: { id: 'kv', name: 'Cloudflare KV', status: env.CONFIG_KV ? 'operational' : 'degraded', role: 'Configuration and cache' },
+              durableObjects: { id: 'durable_objects', name: 'Cloudflare Durable Objects', status: env.AGENT_SESSION ? 'operational' : 'degraded', role: 'Stateful agent session coordination' },
               github: { id: 'github', name: 'GitHub REST API', status: 'operational', role: 'Source Control & PRs' },
               resend: { id: 'resend', name: 'Resend Mailer', status: 'operational', role: 'Transactional Email' },
             },
@@ -381,84 +381,7 @@ export default {
         });
       }
 
-      // Production build: synthetic 7-step agent simulation route removed.
-      // Agent execution is served by the authenticated controller /v1/agents/:id/execute endpoint.
-
-      // -------------------------------------------------------------
-      const simMatch = url.pathname.match(/^\/v1\/agents\/([^/]+)\/simulate-flow$/);
-      if (simMatch && request.method === 'POST') {
-        const agentId = simMatch[1];
-        const agent = PLATFORM_AGENTS.find((a) => a.id === agentId) || PLATFORM_AGENTS[0];
-        const body = await request.json().catch(() => ({}));
-        const prompt = body.prompt || 'Execute canonical autonomous workflow';
-
-        let accumulatedMs = 0;
-        const stagesExecuted = CANONICAL_STAGES.map((stage, idx) => {
-          const stageDuration = 45 + idx * 22;
-          accumulatedMs += stageDuration;
-          return {
-            order: stage.order,
-            canonicalStepNumber: stage.canonicalStepNumber,
-            canonicalPhase: stage.canonicalPhase,
-            id: stage.id,
-            name: stage.name,
-            stageType: stage.stageType,
-            status: 'completed',
-            durationMs: stageDuration,
-            inputSnippet: stage.inputContract,
-            outputSnippet: stage.outputContract,
-            validationCheckPassed: true,
-            expectedResourcesCheck: stage.expectedResourcesCheck,
-          };
-        });
-
-        const approvalId = `appr-${agent.type}-${Date.now().toString(36)}`;
-        const auditLogId = `audit-${agent.id.slice(6, 12)}-${Date.now().toString(36)}`;
-        const auditHash = await sha256Hex(`${agent.id}:${approvalId}:${auditLogId}:${accumulatedMs}:${prompt}`);
-
-        const verification = {
-          verified: true,
-          expectedResourcesSummary: `Target resource contracts verified against ${agent.knowledgeReferences?.length || 0} Title IDs. Output conforms strictly to ${agent.structureFlow.outputFormat}.`,
-          actualResourcesSummary: `100% assertions passed. Zero drift detected across edge bindings, tokens, and target API schemas. Total latency: ${accumulatedMs}ms.`,
-          driftDetected: false,
-        };
-
-        const executionLog = {
-          executionId: auditLogId,
-          automationId: `agent-flow-${agent.id}`,
-          automationTitle: `${agent.name} • 7-Step Canonical Lifecycle Execution`,
-          startedAt: new Date(Date.now() - accumulatedMs).toISOString(),
-          completedAt: new Date().toISOString(),
-          status: 'completed',
-          approvalId,
-          canonicalVerification: verification,
-          auditHash,
-          steps: stagesExecuted.map((st) => ({
-            label: `[Step ${st.canonicalStepNumber}/7] ${st.name}`,
-            status: 'completed',
-          })),
-        };
-
-        inMemoryLogs.unshift(executionLog);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            agentId: agent.id,
-            agentName: agent.name,
-            flowVersion: agent.structureFlow.version,
-            slaTargetMs: agent.structureFlow.slaTargetMs,
-            stagesExecuted,
-            totalDurationMs: accumulatedMs,
-            groundedKnowledgeCount: agent.knowledgeReferences?.length || 0,
-            approvalId,
-            verification,
-            auditLogId,
-            auditHash,
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      // Synthetic simulation endpoints are intentionally unavailable in production.
 
       // -------------------------------------------------------------
       // V1 API: TOOLS & MCP REGISTRY (/v1/tools & /v1/mcp)
@@ -512,33 +435,9 @@ export default {
       // V1 API: AUTOMATIONS ENGINE & APPROVALS (/v1/automations)
       // -------------------------------------------------------------
       if (url.pathname === '/v1/automations' && request.method === 'GET') {
-        const automations = [
-          {
-            id: 'auto-01',
-            automationId: 'monthly-client-update-2026',
-            title: 'Monthly Client Update',
-            status: 'SCHEDULED',
-            trigger: { type: 'schedule', scheduleExpression: '31 October 2026 09:00', humanReadable: 'Monthly on 31 at 09:00' },
-            attachedKnowledge: [
-              { titleId: 'monthly-client-email-v1' },
-              { titleId: 'company-branding-v2' },
-              { titleId: 'signature-template' },
-            ],
-            requiresApproval: true,
-            approvalStatus: 'approved',
-          },
-          {
-            id: 'auto-02',
-            automationId: 'github-pr-lint-deploy',
-            title: 'GitHub PR Automated Edge Verification',
-            status: 'ACTIVE',
-            trigger: { type: 'event', humanReadable: 'Event: GitHub Pull Request Opened' },
-            requiresApproval: false,
-          },
-        ];
-        return new Response(JSON.stringify({ success: true, automations }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        if (!env.DB) return new Response(JSON.stringify({ success: false, error: 'D1 binding unavailable' }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        const result = await env.DB.prepare('SELECT * FROM automations ORDER BY updated_at DESC LIMIT 100').all();
+        return new Response(JSON.stringify({ success: true, automations: result.results || [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       // Natural Language Automation Parser (/v1/automations/parse)
@@ -580,9 +479,9 @@ export default {
 
       // Executions Audit Trail (/v1/executions)
       if (url.pathname === '/v1/executions' && request.method === 'GET') {
-        return new Response(JSON.stringify({ success: true, logs: inMemoryLogs }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        if (!env.DB) return new Response(JSON.stringify({ success: false, error: 'D1 binding unavailable' }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        const result = await env.DB.prepare('SELECT * FROM execution_logs ORDER BY started_at DESC LIMIT 100').all();
+        return new Response(JSON.stringify({ success: true, logs: result.results || [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       // -------------------------------------------------------------
@@ -671,7 +570,6 @@ export default {
             '/v1/agents/:id',
             '/v1/agents/:id/flow',
             '/v1/agents/:id/knowledge',
-            '/v1/agents/:id/simulate-flow',
             '/v1/tools',
             '/v1/mcp',
             '/v1/knowledge',
