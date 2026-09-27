@@ -109,45 +109,28 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
     }
   };
 
-  // Run live simulation of the agent's structure flow
+  // Run a real authenticated production execution through the selected agent.
   const handleSimulateFlow = async () => {
     if (!selectedAgent || isSimulatingFlow) return;
     setIsSimulatingFlow(true);
     setSimulationResult(null);
     setCurrentSimStageIndex(-1);
-
     try {
-      const res = await fetch(`/v1/agents/${selectedAgent.id}/simulate-flow`, {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch(`/v1/agents/${selectedAgent.id}/execute`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: 'Simulated operational task for pipeline verification' }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ prompt: 'Run a production readiness check. Report only facts observed from this real execution.' }),
       });
       const data = await res.json();
-
-      if (data.success && data.stagesExecuted) {
-        // Step through stages with visual animation
-        for (let i = 0; i < data.stagesExecuted.length; i++) {
-          setCurrentSimStageIndex(i);
-          await new Promise((r) => setTimeout(r, 220));
-        }
-        setSimulationResult({
-          stagesExecuted: data.stagesExecuted,
-          totalDurationMs: data.totalDurationMs,
-          slaTargetMs: data.slaTargetMs,
-          approvalId: data.approvalId || `appr-${selectedAgent.type}-${Date.now().toString(36)}`,
-          verification: data.verification || {
-            verified: true,
-            expectedResourcesSummary: `Target resource contracts verified against ${selectedAgent.knowledgeReferences?.length || 0} Title IDs.`,
-            actualResourcesSummary: `100% assertions passed. Zero drift detected across edge bindings.`,
-            driftDetected: false,
-          },
-          auditLogId: data.auditLogId || `audit-${Date.now().toString(36)}`,
-          auditHash: data.auditHash || 'sha256-pending',
-        });
-        showTemporaryNotice(`7-Step Lifecycle Simulation verified! Hash: ${(data.auditHash || '').slice(0, 16)}...`);
-      }
-    } catch (e) {
-      console.error('Flow simulation failed:', e);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Agent execution failed');
+      showTemporaryNotice(`Production execution succeeded via ${data.provider} / ${data.model} in ${data.latencyMs}ms`);
+    } catch (e: any) {
+      console.error('Production agent execution failed:', e);
+      showTemporaryNotice(e?.message || 'Production agent execution failed');
     } finally {
       setIsSimulatingFlow(false);
     }
