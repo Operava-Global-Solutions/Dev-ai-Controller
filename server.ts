@@ -81,19 +81,17 @@ async function startServer() {
   // JSON request body parser
   app.use(express.json());
 
-  // Health endpoint
-  app.get('/api/health', async (req, res) => {
-    res.json({
-      status: 'healthy',
-      app: 'Dev’ai Controller',
-      version: '2.5.0',
-      runtime: 'Cloudflare Workers & Edge Orchestrator',
-      primaryAi: 'Cloudflare Workers AI (@cf/meta/llama-3.3-70b)',
-      fallbackAi: 'OpenAI (gpt-4o-mini)',
-      database: 'Supabase PostgreSQL (RLS Enforced)',
-      email: 'Resend Transactional Mailer',
-      sourceControl: 'GitHub API v3',
-      secretsSecured: true,
+  // Liveness only. Dependency health is reported by /api/status after real checks.
+  app.get('/api/health', (req, res) => {
+    const required = ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'JWT_SECRET', 'WORKER_SECRET'];
+    const missing = required.filter((name) => !process.env[name]);
+    const ready = missing.length === 0;
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ready' : 'not_ready',
+      app: 'Devai Controller',
+      version: process.env.APP_VERSION || 'unknown',
+      dependencies: 'Use /api/status for live provider health',
+      missingRequiredConfiguration: missing,
     });
   });
 
