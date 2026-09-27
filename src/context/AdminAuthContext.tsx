@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { SupabaseAuthUser } from '../types/index.js';
+import type { AdminAuthUser } from '../types/index.js';
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
-  currentUser: SupabaseAuthUser;
+  currentUser: AdminAuthUser;
   token: string | null;
   logout: () => void;
-  setAuthenticatedUser: (user: SupabaseAuthUser, token: string) => void;
+  setAuthenticatedUser: (user: AdminAuthUser, token: string) => void;
 }
 
-const defaultUser: SupabaseAuthUser = {
+const defaultUser: AdminAuthUser = {
   id: 'usr-sb-7782194',
   email: 'secured.jelvan@gmail.com',
   name: 'Jelvan',
