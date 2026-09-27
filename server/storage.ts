@@ -16,132 +16,15 @@ let auditLogs: AuditLog[] = [];
 let chatSessions: Map<string, ChatSession> = new Map();
 let sessionMessages: Map<string, AiChatMessage[]> = new Map();
 
-// Initialize initial chat sessions
-function initDefaultChatSessions() {
-  const now = Date.now();
-  const defaultSessions: Array<{ session: ChatSession; messages: AiChatMessage[] }> = [
-    {
-      session: {
-        id: 'sess-cf-audit-01',
-        title: 'Cloudflare Edge Security & AI Model Audit',
-        createdAt: new Date(now - 1000 * 60 * 180).toISOString(),
-        updatedAt: new Date(now - 1000 * 60 * 160).toISOString(),
-        messageCount: 2,
-        lastMessageSnippet: 'All Cloudflare Workers routes verified with zero-trust token isolation.',
-        tags: ['Cloudflare', 'Zero-Trust', 'Health'],
-      },
-      messages: [
-        {
-          id: 'msg-101',
-          sessionId: 'sess-cf-audit-01',
-          role: 'user',
-          content: 'Check current Cloudflare Workers availability and token health.',
-          timestamp: new Date(now - 1000 * 60 * 180).toISOString(),
-        },
-        {
-          id: 'msg-102',
-          sessionId: 'sess-cf-audit-01',
-          role: 'assistant',
-          content: 'System health check completed. All services are running normally.',
-          timestamp: new Date(now - 1000 * 60 * 160).toISOString(),
-          aiProvider: 'cloudflare_ai',
-          model: 'Edge Worker',
-          status: 'success',
-          steps: [
-            { title: 'Checked Cloudflare endpoint', status: 'completed', detail: 'HTTP 200 OK' },
-            { title: 'Audited worker secret isolation', status: 'completed', detail: 'Protected server-side' },
-            { title: 'Verified standby failover redundancy', status: 'completed', detail: 'Ready for auto-failover' },
-          ],
-        },
-      ],
-    },
-    {
-      session: {
-        id: 'sess-resend-02',
-        title: 'Resend Transactional Deployment Mailer',
-        createdAt: new Date(now - 1000 * 60 * 360).toISOString(),
-        updatedAt: new Date(now - 1000 * 60 * 340).toISOString(),
-        messageCount: 2,
-        lastMessageSnippet: 'Test deployment alert successfully dispatched to secured.jelvan@gmail.com.',
-        tags: ['Resend', 'Alerts', 'Email'],
-      },
-      messages: [
-        {
-          id: 'msg-201',
-          sessionId: 'sess-resend-02',
-          role: 'user',
-          content: 'Test dispatching a deployment notification email to secured.jelvan@gmail.com with subject "Edge Release v2.4 Live".',
-          timestamp: new Date(now - 1000 * 60 * 360).toISOString(),
-        },
-        {
-          id: 'msg-202',
-          sessionId: 'sess-resend-02',
-          role: 'assistant',
-          content: 'Email successfully processed and delivered via Resend API v1! Message ID: `msg_resend_9941a`. Delivery confirmed to `secured.jelvan@gmail.com`.',
-          timestamp: new Date(now - 1000 * 60 * 340).toISOString(),
-          service: 'resend',
-          status: 'success',
-          steps: [
-            { title: 'Validated Resend token credentials', status: 'completed' },
-            { title: 'Constructed responsive HTML deployment template', status: 'completed' },
-            { title: 'Dispatched through Resend API pipeline', status: 'completed', detail: 'HTTP 200 Delivered' },
-          ],
-        },
-      ],
-    },
-    {
-      session: {
-        id: 'sess-supabase-03',
-        title: 'Supabase PostgreSQL Database RLS Inspection',
-        createdAt: new Date(now - 1000 * 60 * 600).toISOString(),
-        updatedAt: new Date(now - 1000 * 60 * 580).toISOString(),
-        messageCount: 2,
-        lastMessageSnippet: 'RLS policies for audit_logs and api_tokens verified active.',
-        tags: ['Supabase', 'PostgreSQL', 'RLS'],
-      },
-      messages: [
-        {
-          id: 'msg-301',
-          sessionId: 'sess-supabase-03',
-          role: 'user',
-          content: 'Inspect Supabase PostgreSQL connection and verify Row Level Security status on tables.',
-          timestamp: new Date(now - 1000 * 60 * 600).toISOString(),
-        },
-        {
-          id: 'msg-302',
-          sessionId: 'sess-supabase-03',
-          role: 'assistant',
-          content: 'Supabase PostgreSQL 15.6 instance is connected and responding in 27ms. Verified Row Level Security (RLS) enabled on `api_tokens` and `audit_logs` collections.',
-          timestamp: new Date(now - 1000 * 60 * 580).toISOString(),
-          service: 'supabase',
-          status: 'success',
-          steps: [
-            { title: 'Pinged Supabase REST endpoint', status: 'completed', detail: 'Latency: 27ms' },
-            { title: 'Queried PostgreSQL information_schema for RLS status', status: 'completed' },
-            { title: 'Audited user session validator', status: 'completed', detail: 'Active & Enforced' },
-          ],
-        },
-      ],
-    },
-  ];
-
-  for (const item of defaultSessions) {
-    chatSessions.set(item.session.id, item.session);
-    sessionMessages.set(item.session.id, item.messages);
-  }
-}
-
-initDefaultChatSessions();
-
-// Optional Supabase client if configured
+// Production starts with no fabricated chat history. Sessions are created only by real user activity.\n\n// Optional Supabase client if configured
 let supabaseClient: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient | null {
-  if (!supabaseClient && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+  if (!supabaseClient && process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)) {
     try {
       supabaseClient = createClient(
         process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY,
+        (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)!,
         { auth: { persistSession: false } }
       );
     } catch (err) {
