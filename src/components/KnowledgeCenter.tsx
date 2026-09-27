@@ -469,20 +469,20 @@ export const KnowledgeCenter: React.FC = () => {
         <div className="rounded-2xl border border-[#e2e4e9] dark:border-[#252a35] bg-white dark:bg-[#161a22] p-6 shadow-2xs space-y-6">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-[#1a1d24] dark:text-[#f0f3f6]">
-              Interactive Error Translation Simulator
+              Production Error Reference
             </h3>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">
-              See how Dev’ai Controller intercepts raw, frightening code errors and instantly converts them into plain, actionable English advice.
+              Reference real production error signatures and the corrective action to take when they occur.
             </p>
           </div>
 
           {/* Buttons to trigger sample errors */}
           <div className="flex flex-wrap gap-2">
             {[
-              { id: '401-resend', label: 'Simulate 401 Missing Resend Key' },
-              { id: '429-cf', label: 'Simulate 429 Cloudflare AI Rate Limit' },
-              { id: 'rls-supabase', label: 'Simulate Supabase RLS Permission Denied' },
-              { id: '504-timeout', label: 'Simulate 504 Edge Gateway Timeout' },
+              { id: '401-resend', label: '401 Missing Resend Key' },
+              { id: '429-cf', label: '429 Cloudflare AI Rate Limit' },
+              { id: 'rls-supabase', label: 'Supabase RLS Permission Denied' },
+              { id: '504-timeout', label: '504 Edge Gateway Timeout' },
             ].map((sim) => (
               <button
                 key={sim.id}
@@ -528,7 +528,7 @@ export const KnowledgeCenter: React.FC = () => {
                   {simulatedError === '401-resend' &&
                     'Your email notification could not send because the Resend API secret token is missing or expired. Your application files and data are completely safe.'}
                   {simulatedError === '429-cf' &&
-                    'Cloudflare Workers AI reached its momentary request limit. Dev’ai has automatically switched to OpenAI backup so your work continues without interruption.'}
+                    'Cloudflare Workers AI reached its momentary request limit. The primary provider rejected the request. Check the live response and configured fallback provider; the system must not claim failover unless a real fallback request succeeds.'}
                   {simulatedError === 'rls-supabase' &&
                     'The database blocked saving this log entry because Row Level Security is active. Setting the SUPABASE_SERVICE_KEY on the server will safely allow this operation.'}
                   {simulatedError === '504-timeout' &&
@@ -538,7 +538,7 @@ export const KnowledgeCenter: React.FC = () => {
                   <span>Recommended Action: </span>
                   <span className="font-normal underline">
                     {simulatedError === '401-resend' && 'Open Settings, paste your RESEND_API_KEY, and click save.'}
-                    {simulatedError === '429-cf' && 'No action needed — auto-failover handled it!'}
+                    {simulatedError === '429-cf' && 'Check provider status, Retry-After, and live fallback execution result before retrying.'}
                     {simulatedError === 'rls-supabase' && 'Check the Supabase table permissions guide below.'}
                     {simulatedError === '504-timeout' && 'Click the retry button in the chat.'}
                   </span>
@@ -547,7 +547,7 @@ export const KnowledgeCenter: React.FC = () => {
             </div>
           ) : (
             <div className="p-8 text-center border border-dashed border-[#e2e4e9] dark:border-[#282d38] rounded-xl text-xs text-[#80868b]">
-              Click one of the simulation buttons above to test the plain English translation engine.
+              Select a production error signature above to view its diagnosis and corrective action.
             </div>
           )}
         </div>
