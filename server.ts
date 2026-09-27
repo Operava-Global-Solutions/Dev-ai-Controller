@@ -24,7 +24,7 @@ import {
   addKnowledgeDocument,
   deleteKnowledgeDocument,
   toggleKnowledgeDocument,
-  simulateWorkerAgentResponse,
+  executeWorkerAgentResponse,
   generateCloudflareWorkerExport,
 } from './server/services/workerAgentService.js';
 import {
@@ -512,15 +512,15 @@ async function startServer() {
     }
   });
 
-  // Live Worker Agent Simulator (tests WhatsApp, Messenger, Email, or Webchat routing with internal vs external knowledge)
-  app.post('/api/worker-agent/simulate', async (req, res) => {
+  // Production Worker Agent execution. Uses real configured AI providers and fails closed if unavailable.
+  app.post('/api/worker-agent/execute', requireAdminAuth, async (req, res) => {
     try {
       const { message, config } = req.body;
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ success: false, error: 'Customer message is required' });
       }
-      const simulationResult = await simulateWorkerAgentResponse(message, config);
-      res.json({ success: true, ...simulationResult });
+      const executionResult = await executeWorkerAgentResponse(message, config);
+      res.json({ success: true, ...executionResult });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }
