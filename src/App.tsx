@@ -22,7 +22,7 @@ import type {
   NotificationItem,
   CodingTask,
   AuditLog,
-  SupabaseAuthUser,
+  AdminAuthUser,
 } from './types/index.js';
 
 export default function App() {
@@ -30,8 +30,8 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedChatSessionId, setSelectedChatSessionId] = useState<string | null>(null);
 
-  // Authenticated Supabase User (read-only session display)
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser>({
+  // Authenticated Admin User (read-only session display)
+  const [currentUser, setCurrentUser] = useState<AdminAuthUser>({
     id: 'usr-sb-7782194',
     email: 'secured.jelvan@gmail.com',
     name: 'Jelvan',
