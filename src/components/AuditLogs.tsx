@@ -97,7 +97,7 @@ export const AuditLogs: React.FC<AuditLogsProps> = ({ logs, onRefresh }) => {
         </div>
 
         <div className="flex items-center space-x-1 bg-white dark:bg-[#161a22] p-1 rounded-xl border border-[#e2e4e9] dark:border-[#252a35] shadow-2xs text-xs">
-          {(['all', 'success', 'simulated', 'error'] as const).map((st) => (
+          {(['all', 'success', 'error'] as const).map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -135,8 +135,6 @@ export const AuditLogs: React.FC<AuditLogsProps> = ({ logs, onRefresh }) => {
                     <div className="mt-0.5">
                       {log.status === 'success' ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      ) : log.status === 'simulated' ? (
-                        <CheckCircle2 className="h-4 w-4 text-blue-500" />
                       ) : (
                         <AlertCircle className="h-4 w-4 text-rose-500" />
                       )}
