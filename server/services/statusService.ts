@@ -115,7 +115,7 @@ export async function getServicesStatus(): Promise<{
       primaryAiProvider: 'Cloudflare Workers AI (@cf/meta/llama-3.3-70b)',
       fallbackAiProvider: 'OpenAI (gpt-4o-mini)',
       totalActiveDeployments: 0,
-      securedSecretsCount: ['CLOUDFLARE_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','GITHUB_TOKEN','RESEND_API_KEY','OPENAI_API_KEY','GEMINI_API_KEY','JWT_SECRET','WORKER_SECRET'].filter((k) => Boolean(process.env[k])).length,
+      securedSecretsCount: ['CLOUDFLARE_API_TOKEN','GITHUB_TOKEN','RESEND_API_KEY','OPENAI_API_KEY','GEMINI_API_KEY','JWT_SECRET','WORKER_SECRET'].filter((k) => Boolean(process.env[k])).length,
       timestamp,
     },
   };
