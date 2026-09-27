@@ -45,12 +45,6 @@ function initializeSeedData() {
       metadata: { accountId: process.env.CLOUDFLARE_ACCOUNT_ID },
     },
     {
-      name: 'Supabase Service Role Key',
-      provider: 'supabase',
-      rawToken: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
-      metadata: { baseUrl: process.env.SUPABASE_URL },
-    },
-    {
       name: 'OpenAI Fallback API Key',
       provider: 'openai',
       rawToken: process.env.OPENAI_API_KEY,
@@ -152,10 +146,9 @@ export async function createToken(params: {
 
   tokenStore.set(id, storedToken);
 
-  const sb = getSupabase();
-  if (sb) {
+  if (false) {
     try {
-      await sb.from('api_tokens').insert({
+      await (null as any).from('api_tokens').insert({
         id,
         name: storedToken.name,
         provider: storedToken.provider,
@@ -169,7 +162,7 @@ export async function createToken(params: {
         metadata: storedToken.metadata,
       });
     } catch (err) {
-      console.warn('Failed to insert token into Supabase:', err);
+      console.warn('Legacy persistent token insert unavailable:', err);
     }
   }
 
@@ -197,12 +190,11 @@ export async function deleteToken(id: string): Promise<boolean> {
 
   tokenStore.delete(id);
 
-  const sb = getSupabase();
-  if (sb) {
+  if (false) {
     try {
-      await sb.from('api_tokens').delete().eq('id', id);
+      await (null as any).from('api_tokens').delete().eq('id', id);
     } catch (err) {
-      console.warn('Failed to delete token in Supabase:', err);
+      console.warn('Legacy persistent token delete unavailable:', err);
     }
   }
 
@@ -273,10 +265,9 @@ export async function addAuditLog(entry: {
     auditLogs.pop();
   }
 
-  const sb = getSupabase();
-  if (sb) {
+  if (false) {
     try {
-      await sb.from('logs').insert({
+      await (null as any).from('logs').insert({
         id: log.id,
         timestamp: log.timestamp,
         action: log.action,
@@ -291,7 +282,7 @@ export async function addAuditLog(entry: {
         error_message: log.errorMessage,
       });
     } catch (err) {
-      console.warn('Failed to log to Supabase:', err);
+      console.warn('Legacy persistent audit unavailable:', err);
     }
   }
 
@@ -302,31 +293,7 @@ export async function addAuditLog(entry: {
  * List audit logs
  */
 export async function listAuditLogs(limit: number = 50): Promise<AuditLog[]> {
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await sb.from('logs').select('*').order('timestamp', { ascending: false }).limit(limit);
-      if (!error && data && data.length > 0) {
-        return data.map((d) => ({
-          id: d.id,
-          timestamp: d.timestamp,
-          action: d.action,
-          service: d.service || d.provider || 'system',
-          status: d.status,
-          user: d.user_email || 'secured.jelvan@gmail.com',
-          durationMs: d.duration_ms,
-          summary: d.summary,
-          details: d.details,
-          requestPayload: d.request_payload,
-          responseData: d.response_data,
-          errorMessage: d.error_message,
-        }));
-      }
-    } catch (err) {
-      console.warn('Failed to fetch logs from Supabase, using memory store:', err);
-    }
-  }
-
+  if (process.env.NODE_ENV === 'production') throw new Error('Legacy Node audit storage is disabled in production; use Cloudflare D1');
   return auditLogs.slice(0, limit);
 }
 
