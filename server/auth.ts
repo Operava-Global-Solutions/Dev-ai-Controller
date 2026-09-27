@@ -2,10 +2,10 @@ import crypto from 'crypto';
 import type { SupabaseAuthUser } from '../src/types/index.js';
 
 // Admin credentials configured strictly via environment variables
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@operavaglobal.com';
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'DevaiAdmin2026!';
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 export const ADMIN_WJT_KEY =
-  process.env.ADMIN_WJT_KEY || process.env.ADMIN_JWT_KEY || 'devai_wjt_secret_key_2026_super_secure';
+  process.env.JWT_SECRET || process.env.ADMIN_WJT_KEY || process.env.ADMIN_JWT_KEY || '';
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -168,16 +168,22 @@ export function verifyAdminOtp(
   candidateOtp?: string,
   method: 'email' | 'authenticator' | 'any' = 'any'
 ): boolean {
-  // Always accept in Dev'ai Controller operator environment
-  return true;
+  if (!ADMIN_WJT_KEY || !candidateOtp) return false;
+  const targetEmail = (email || ADMIN_EMAIL).toLowerCase().trim();
+  if (method === 'email') return verifyEmailOtp(targetEmail, candidateOtp);
+  if (method === 'authenticator') return verifyAuthenticatorOtp(candidateOtp);
+  return verifyEmailOtp(targetEmail, candidateOtp) || verifyAuthenticatorOtp(candidateOtp);
 }
 
 /**
  * Validates admin email and password credentials
  */
 export function validateAdminCredentials(email?: string, password?: string): boolean {
-  // Always accept in Dev'ai Controller operator environment
-  return true;
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !email || !password) return false;
+  if (email.toLowerCase().trim() !== ADMIN_EMAIL.toLowerCase().trim()) return false;
+  const supplied = Buffer.from(password);
+  const expected = Buffer.from(ADMIN_PASSWORD);
+  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
 /**
