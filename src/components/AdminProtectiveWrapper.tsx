@@ -7,13 +7,13 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { AdminAuthContext } from '../context/AdminAuthContext.js';
-import type { SupabaseAuthUser } from '../types/index.js';
+import type { AdminAuthUser } from '../types/index.js';
 
 interface AdminProtectiveWrapperProps {
   children: React.ReactNode;
 }
 
-const defaultUser: SupabaseAuthUser = {
+const defaultUser: AdminAuthUser = {
   id: 'usr-sb-7782194',
   email: 'secured.jelvan@gmail.com',
   name: 'Jelvan',
@@ -24,7 +24,7 @@ const defaultUser: SupabaseAuthUser = {
 
 export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<SupabaseAuthUser>(defaultUser);
+  const [currentUser, setCurrentUser] = useState<AdminAuthUser>(defaultUser);
   const [token, setToken] = useState<string | null>(() =>
     typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
   );
