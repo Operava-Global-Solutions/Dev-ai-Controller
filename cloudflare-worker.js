@@ -381,8 +381,9 @@ export default {
         });
       }
 
-      // -------------------------------------------------------------
-      // 7-STEP CANONICAL AGENT FLOW SIMULATOR (/v1/agents/:id/simulate-flow)
+      // Production build: synthetic 7-step agent simulation route removed.
+      // Agent execution is served by the authenticated controller /v1/agents/:id/execute endpoint.
+
       // -------------------------------------------------------------
       const simMatch = url.pathname.match(/^\/v1\/agents\/([^/]+)\/simulate-flow$/);
       if (simMatch && request.method === 'POST') {
