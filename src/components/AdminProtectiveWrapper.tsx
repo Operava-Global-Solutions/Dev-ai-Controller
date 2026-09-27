@@ -23,14 +23,17 @@ const defaultUser: SupabaseAuthUser = {
 };
 
 export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<SupabaseAuthUser>(defaultUser);
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('admin_token') || 'devai-operator-session';
-    }
-    return 'devai-operator-session';
-  });
+  const [token, setToken] = useState<string | null>(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
+  );
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [isAuthBusy, setIsAuthBusy] = useState(false);
 
   // Dark Mode State
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -57,23 +60,69 @@ export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ 
     });
   };
 
-  // Ensure active admin token on mount
+  // Verify an existing Worker-signed session on mount.
   useEffect(() => {
-    const currentToken = localStorage.getItem('admin_token') || 'devai-operator-session';
-    localStorage.setItem('admin_token', currentToken);
-    setToken(currentToken);
-    setCurrentUser(defaultUser);
-    setIsAuthenticated(true);
+    const savedToken = localStorage.getItem('admin_token');
+    if (!savedToken) return;
+    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${savedToken}` } })
+      .then(async (res) => ({ ok: res.ok, data: await res.json() }))
+      .then(({ ok, data }) => {
+        if (ok && data.success && data.user) {
+          setToken(savedToken);
+          setCurrentUser(data.user);
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('admin_token');
+          setToken(null);
+        }
+      })
+      .catch(() => {
+        setAuthError('API not connected. Check the Cloudflare Worker deployment.');
+      });
   }, []);
 
-  // Unlock Controller
-  const handleUnlock = (e?: React.FormEvent) => {
+  const handleRequestOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const activeToken = token || localStorage.getItem('admin_token') || 'devai-operator-session';
-    localStorage.setItem('admin_token', activeToken);
-    setToken(activeToken);
-    setCurrentUser(defaultUser);
-    setIsAuthenticated(true);
+    setIsAuthBusy(true);
+    setAuthError('');
+    try {
+      const res = await fetch('/api/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Unable to request verification code');
+      setOtpRequested(true);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'API not connected');
+    } finally {
+      setIsAuthBusy(false);
+    }
+  };
+
+  const handleUnlock = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!otpRequested) return handleRequestOtp();
+    setIsAuthBusy(true);
+    setAuthError('');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, otp, method: 'email' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.token || !data.user) throw new Error(data.error || 'Login failed');
+      localStorage.setItem('admin_token', data.token);
+      setToken(data.token);
+      setCurrentUser(data.user);
+      setIsAuthenticated(true);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'API not connected');
+    } finally {
+      setIsAuthBusy(false);
+    }
   };
 
   // Logout / Lock Controller
@@ -152,29 +201,48 @@ export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ 
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[#f8f9fb] dark:bg-[#1a1f28] border border-[#e2e4e9] dark:border-[#2c3240] text-xs text-left space-y-2">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#5f6368] dark:text-[#9aa0a6]">Operator Account:</span>
-              <span className="font-semibold text-[#1a1d24] dark:text-[#f0f3f6]">secured.jelvan@gmail.com</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#5f6368] dark:text-[#9aa0a6]">Authorization:</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Developer / Operator</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#5f6368] dark:text-[#9aa0a6]">Security:</span>
-              <span className="font-mono text-[10px] text-purple-600 dark:text-purple-400">Zero-Trust Edge Perimeter</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
+          <form onSubmit={handleUnlock} className="space-y-3 text-left">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Admin email"
+              autoComplete="username"
+              required
+              className="w-full px-3.5 py-3 rounded-xl border border-[#e2e4e9] dark:border-[#2c3240] bg-[#f8f9fb] dark:bg-[#1a1f28] text-sm outline-none"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Admin password"
+              autoComplete="current-password"
+              required
+              className="w-full px-3.5 py-3 rounded-xl border border-[#e2e4e9] dark:border-[#2c3240] bg-[#f8f9fb] dark:bg-[#1a1f28] text-sm outline-none"
+            />
+            {otpRequested && (
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                placeholder="6-digit email verification code"
+                required
+                className="w-full px-3.5 py-3 rounded-xl border border-[#e2e4e9] dark:border-[#2c3240] bg-[#f8f9fb] dark:bg-[#1a1f28] text-sm outline-none"
+              />
+            )}
+            {authError && <p className="text-xs text-red-600 dark:text-red-400">{authError}</p>}
+            <button
+            type="submit"
             onClick={() => handleUnlock()}
             className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
-            <span>Enter Dev’ai Controller</span>
+            <span>{isAuthBusy ? 'Connecting…' : otpRequested ? 'Verify & Enter' : 'Send Verification Code'}</span>
             <ArrowRight className="h-4 w-4" />
-          </button>
+            </button>
+          </form>
         </div>
       </main>
     </div>
