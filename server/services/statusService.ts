@@ -73,11 +73,9 @@ export async function getServicesStatus(): Promise<{
     version: 'REST API v3',
     details: ghRes.user
       ? `Authenticated as @${ghRes.user} with repository & pull_request scopes.`
-      : 'GitHub REST API connected with standard repository access & code inspection.',
+      : (ghRes.message || 'GitHub authentication check failed.'),
     metrics: {
-      'Rate Limit': '5000/hr',
-      'Repositories Monitored': 4,
-      'PR Automation': 'Enabled',
+      'Authenticated': ghRes.valid ? 'Yes' : 'No',
     },
     features: ['Repository Inspection', 'Source Code Analysis', 'Pull Request Automation', 'Commit Verification'],
   };
@@ -96,9 +94,7 @@ export async function getServicesStatus(): Promise<{
     version: 'Resend API v1',
     details: reRes.message || 'Transactional email delivery pipeline verified. Ready for deployment and agent alerts.',
     metrics: {
-      'Deliverability': '99.9%',
-      'DKIM/SPF': 'Verified',
-      'Monthly Quota': '3,000 / 50,000',
+      'Authenticated': reRes.valid ? 'Yes' : 'No',
     },
     features: ['Transactional Email', 'Deployment Notifications', 'System Alerts', 'Batch Email Delivery'],
   };
