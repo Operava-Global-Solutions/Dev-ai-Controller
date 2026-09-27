@@ -147,7 +147,7 @@ export function verifyEmailOtp(email: string, candidateOtp: string): boolean {
   const now = Date.now();
   const currentStep = Math.floor(now / (1000 * 300));
 
-  for (const step of [currentStep, currentStep - 1, currentStep + 1]) {
+  for (const step of [currentStep, currentStep - 1]) {
     const hmac = crypto.createHmac('sha256', ADMIN_WJT_KEY);
     hmac.update(`email-otp:${email.toLowerCase().trim()}:${step}`);
     const hash = hmac.digest('hex');
@@ -248,7 +248,8 @@ export function verifyAdminJwt(token: string): any | null {
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 
-  if (signature !== expectedSignature) return null;
+  const suppliedSig = Buffer.from(signature); const expectedSig = Buffer.from(expectedSignature);
+  if (suppliedSig.length !== expectedSig.length || !crypto.timingSafeEqual(suppliedSig, expectedSig)) return null;
 
   try {
     const payload = JSON.parse(base64UrlDecode(encodedPayload));
