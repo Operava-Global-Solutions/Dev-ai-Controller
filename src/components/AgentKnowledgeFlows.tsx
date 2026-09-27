@@ -55,9 +55,9 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
   const [knowledgeItems, setKnowledgeItems] = useState<AttachedKnowledgeItem[]>([]);
   const [compatibleItems, setCompatibleItems] = useState<AttachedKnowledgeItem[]>([]);
   const [inspectingDoc, setInspectingDoc] = useState<AttachedKnowledgeItem | null>(null);
-  const [isSimulatingFlow, setIsSimulatingFlow] = useState(false);
+  const [isExecutingFlow, setIsExecutingFlow] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
-  const [simulationResult, setSimulationResult] = useState<{
+  const [executionReceipt, setExecutionReceipt] = useState<{
     stagesExecuted: Array<{
       order: number;
       canonicalStepNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -84,7 +84,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
     auditLogId: string;
     auditHash: string;
   } | null>(null);
-  const [currentSimStageIndex, setCurrentSimStageIndex] = useState<number>(-1);
+  const [currentExecutionStageIndex, setCurrentExecutionStageIndex] = useState<number>(-1);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const [isLinking, setIsLinking] = useState(false);
@@ -110,7 +110,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
   };
 
   // Run a real authenticated production execution through the selected agent.
-  const handleSimulateFlow = async () => {
+  const handleExecuteFlow = async () => {
     if (!selectedAgent || isSimulatingFlow) return;
     setIsSimulatingFlow(true);
     setSimulationResult(null);
@@ -373,7 +373,7 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
                 ) : (
                   <Play className="h-3.5 w-3.5 fill-current" />
                 )}
-                <span>{isSimulatingFlow ? 'Simulating Pipeline...' : 'Test Structure Flow'}</span>
+                <span>{isSimulatingFlow ? 'Executing Production Agent...' : 'Run Production Agent'}</span>
               </button>
             </div>
           </div>
@@ -530,14 +530,14 @@ export const AgentKnowledgeFlows: React.FC<AgentKnowledgeFlowsProps> = ({
             </div>
           </div>
 
-          {/* Simulation Progress & Comprehensive Verification Receipt */}
+          {/* Production Execution Receipt */}
           {simulationResult && (
             <div className="p-4 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs space-y-3.5 shadow-xs animate-in fade-in">
               <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-emerald-200 dark:border-emerald-800/80">
                 <span className="flex items-center space-x-2 text-emerald-900 dark:text-emerald-100 font-bold text-sm">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                   <span>
-                    7-Step Lifecycle Simulation Complete ({simulationResult.totalDurationMs}ms / Budget: &lt;{simulationResult.slaTargetMs}ms)
+                    Production Agent Execution Complete ({simulationResult.totalDurationMs}ms / Budget: &lt;{simulationResult.slaTargetMs}ms)
                   </span>
                 </span>
                 <div className="flex items-center space-x-2">
