@@ -10,7 +10,7 @@ import type {
 } from '../src/types/index.js';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// In-memory store backed by initial seeds
+// Process-local caches only. Persistent production records must use the configured database.
 let tokenStore: Map<string, StoredApiToken> = new Map();
 let auditLogs: AuditLog[] = [];
 let chatSessions: Map<string, ChatSession> = new Map();
@@ -93,8 +93,8 @@ function initializeSeedData() {
     tokenStore.set(id, token);
   }
 
-  // Initial audit log
-  auditLogs.push({
+  // Record local vault initialization only outside production; production audit history must be persistent.
+  if (process.env.NODE_ENV !== 'production') auditLogs.push({
     id: `log_init_${Date.now()}`,
     timestamp: new Date().toISOString(),
     action: 'system.vault_initialize',
@@ -132,11 +132,14 @@ export async function listTokens(): Promise<ApiToken[]> {
         }));
       }
     } catch (err) {
-      console.warn('Supabase query failed, falling back to in-memory store:', err);
+      console.error('Supabase query failed:', err);
+      throw new Error('Persistent token storage is unavailable');
     }
   }
 
-  // Return in-memory tokens stripped of encrypted data
+  if (process.env.NODE_ENV === 'production' && !sb) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for persistent production token storage');
+
+  // Development-only local cache, stripped of encrypted data
   return Array.from(tokenStore.values()).map((t) => {
     const { encryptedData, ...safe } = t;
     return safe;
