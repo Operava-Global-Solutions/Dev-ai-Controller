@@ -301,7 +301,7 @@ Provides an isolated, drop-in customer service chat widget for any external webs
 
 ### System & Operations Endpoints
 - `GET /api/health` — Edge status, airport colocation, and active Cloudflare bindings.
-- `GET /api/status` — Multi-service operational monitor (Cloudflare, Supabase, GitHub, Resend).
+- `GET /api/status` — Multi-service operational monitor for the configured Cloudflare runtime and external integrations.
 - `GET /api/deployments` — Deployed edge applications monitoring.
 - `POST /api/deployments/trigger` — Trigger deployment.
 - `POST /api/deployments/rollback` — Instant zero-downtime rollback.
@@ -312,7 +312,7 @@ Provides an isolated, drop-in customer service chat widget for any external webs
 
 ## 🔒 11. Security & Zero-Trust Secrets Isolation
 
-1. **Zero Browser Exposure**: API tokens (`CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ADMIN_PASSWORD`) are stored in server-side environment variables and encrypted using `AES-256-GCM` with 96-bit unique IVs.
+1. **Zero Browser Exposure**: API tokens (`CLOUDFLARE_API_TOKEN`, `GITHUB_TOKEN`, `RESEND_API_KEY`, `ADMIN_PASSWORD`) are stored in server-side environment variables and encrypted using `AES-256-GCM` with 96-bit unique IVs.
 2. **Untrusted Uploads**: Ingested files are treated as untrusted data, never as system instructions.
 3. **Prompt Injection Defense**:
    ```
@@ -331,8 +331,8 @@ Provides an isolated, drop-in customer service chat widget for any external webs
 
 ### 1. Installation
 ```bash
-git clone https://github.com/jelvan-operava/Dev-ai-Controller-.git
-cd Dev-ai-Controller-
+git clone https://github.com/jelvan-operava/Dev-ai-Controller.git
+cd Dev-ai-Controller
 npm install
 ```
 
@@ -345,9 +345,9 @@ Populate `.env` with your API keys:
 - `CLOUDFLARE_API_TOKEN`
 - `RESEND_API_KEY`
 - `GITHUB_TOKEN`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_PASSWORD`
+- `ADMIN_JWT_KEY`
+- `WORKER_SECRET`
 
 ### 3. Start Development Server
 ```bash
@@ -357,12 +357,11 @@ Runs Express fullstack server with Vite middleware on `http://localhost:3000`.
 
 ### 4. Build & Verify
 ```bash
-npm run lint
-npm run build
+npm run check
 ```
 
 ### 5. Deploy to Cloudflare Edge
 ```bash
 npx wrangler deploy
 ```
-Deploys `cloudflare-worker.js` with all bindings to the Cloudflare Global Edge.
+Deploys `cloudflare-worker.js` with all bindings to the Cloudflare Global Edge. Before deploying, replace the placeholder D1 database ID and KV namespace ID in `wrangler.toml` with values provisioned in the target Cloudflare account.
