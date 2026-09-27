@@ -40,73 +40,22 @@ export default function App() {
     lastSignInAt: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
   });
 
-  // Services Status Data
+  // Services Status Data: production status is unknown until /api/status responds.
   const [services, setServices] = useState<Record<ServiceType, ServiceStatusInfo>>({
-    cloudflare: {
-      id: 'cloudflare',
-      name: 'Cloudflare',
-      role: 'Primary Runtime, Edge APIs & Cloudflare AI',
-      status: 'operational',
-      latencyMs: 22,
-      lastChecked: new Date().toISOString(),
-      version: 'Workers v2026.3',
-      details: 'Workers runtime, request routing, and Cloudflare AI healthy.',
-      features: ['Serverless Runtime', 'Cloudflare Workers AI', 'Request Routing', 'Zero-Trust Secrets'],
-    },
-    supabase: {
-      id: 'supabase',
-      name: 'Supabase',
-      role: 'Authentication & Central Database',
-      status: 'operational',
-      latencyMs: 27,
-      lastChecked: new Date().toISOString(),
-      version: 'PostgreSQL 15.6',
-      details: 'Supabase Auth session validator and PostgreSQL database connected with RLS policies.',
-      features: ['Supabase Auth', 'PostgreSQL Database', 'Row Level Security', 'Audit Trail Storage'],
-    },
-    github: {
-      id: 'github',
-      name: 'GitHub',
-      role: 'Source Code, Commits & PR Automation',
-      status: 'operational',
-      latencyMs: 38,
-      lastChecked: new Date().toISOString(),
-      version: 'REST API v3',
-      details: 'GitHub REST API connected with standard repository access & code inspection.',
-      features: ['Repository Inspection', 'Source Code Analysis', 'Pull Request Automation', 'Commit Verification'],
-    },
-    resend: {
-      id: 'resend',
-      name: 'Resend',
-      role: 'Transactional Email & Notifications',
-      status: 'operational',
-      latencyMs: 34,
-      lastChecked: new Date().toISOString(),
-      version: 'Resend API v1',
-      details: 'Transactional email delivery pipeline verified. Ready for deployment and agent alerts.',
-      features: ['Transactional Email', 'Deployment Notifications', 'System Alerts', 'Batch Email Delivery'],
-    },
-    openai: {
-      id: 'openai',
-      name: 'OpenAI (Fallback)',
-      role: 'Secondary / Fallback AI Provider',
-      status: 'standby',
-      latencyMs: 44,
-      lastChecked: new Date().toISOString(),
-      version: 'gpt-4o-mini',
-      details: 'Standby fallback provider available. Ready to seamlessly take over if primary Cloudflare AI throttles.',
-      isFallback: true,
-      features: ['Secondary Fallback AI', 'Automatic Failover', 'Zero-Downtime Reasoning', 'Model Redundancy'],
-    },
+    cloudflare: { id: 'cloudflare', name: 'Cloudflare', role: 'Primary Runtime, Edge APIs & Cloudflare AI', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
+    supabase: { id: 'supabase', name: 'Supabase', role: 'Authentication & Central Database', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
+    github: { id: 'github', name: 'GitHub', role: 'Source Code, Commits & PR Automation', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
+    resend: { id: 'resend', name: 'Resend', role: 'Transactional Email & Notifications', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
+    openai: { id: 'openai', name: 'OpenAI (Fallback)', role: 'Secondary / Fallback AI Provider', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', isFallback: true, features: [] },
   });
 
   const [systemSummary, setSystemSummary] = useState({
-    overallStatus: 'all_operational' as const,
-    primaryAiProvider: 'Cloudflare Workers AI (@cf/meta/llama-3.3-70b)',
-    fallbackAiProvider: 'OpenAI (gpt-4o-mini)',
-    totalActiveDeployments: 5,
-    securedSecretsCount: 5,
-    timestamp: new Date().toISOString(),
+    overallStatus: 'degraded' as const,
+    primaryAiProvider: 'Awaiting live health check',
+    fallbackAiProvider: 'Awaiting live health check',
+    totalActiveDeployments: 0,
+    securedSecretsCount: 0,
+    timestamp: '',
   });
 
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
