@@ -234,8 +234,8 @@ export const WorkerAgent: React.FC = () => {
     }
   };
 
-  // Run Simulation Test
-  const handleRunSimulation = async (e?: React.FormEvent) => {
+  // Execute Production Worker Test
+  const handleExecuteWorker = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!simulationPrompt.trim() || isSimulating) return;
 
@@ -244,9 +244,10 @@ export const WorkerAgent: React.FC = () => {
     setSimulationResult(null);
 
     try {
-      const res = await fetch('/api/worker-agent/simulate', {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch('/api/worker-agent/execute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           message: simulationPrompt.trim(),
           config,
@@ -257,7 +258,7 @@ export const WorkerAgent: React.FC = () => {
       if (data.success) {
         setSimulationResult(data);
       } else {
-        setSimulationError(data.error || 'Failed to simulate response');
+        setSimulationError(data.error || 'Production worker execution failed');
       }
     } catch (err: any) {
       setSimulationError(err.message || 'Simulation network error');
@@ -733,7 +734,7 @@ A: Yes, all sessions and secrets are encrypted with AES-256-GCM zero-trust stora
         </div>
 
         <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] leading-relaxed">
-          Simulate how the Cloudflare Worker responds to customer inquiries on your active channel ({config.channel}), testing knowledge grounding ({config.knowledgeMode}) and persona tone:
+          Execute the production Worker AI path for a customer inquiry on your active channel ({config.channel}), testing knowledge grounding ({config.knowledgeMode}) and persona tone:
         </p>
 
         {/* Quick sample inquiry chips */}
@@ -762,7 +763,7 @@ A: Yes, all sessions and secrets are encrypted with AES-256-GCM zero-trust stora
         </div>
 
         {/* Form Input & Action */}
-        <form onSubmit={handleRunSimulation} className="flex gap-2">
+        <form onSubmit={handleExecuteWorker} className="flex gap-2">
           <input
             type="text"
             value={simulationPrompt}
@@ -776,7 +777,7 @@ A: Yes, all sessions and secrets are encrypted with AES-256-GCM zero-trust stora
             className="px-4 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
           >
             {isSimulating ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            <span>{isSimulating ? 'Processing...' : 'Simulate'}</span>
+            <span>{isSimulating ? 'Processing...' : 'Execute'}</span>
           </button>
         </form>
 
