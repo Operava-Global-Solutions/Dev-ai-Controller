@@ -8,7 +8,7 @@ import type {
   ChatSession,
   AiChatMessage,
 } from '../src/types/index.js';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
 
 // Process-local caches only. Persistent production records must use the configured database.
 let tokenStore: Map<string, StoredApiToken> = new Map();
@@ -16,23 +16,7 @@ let auditLogs: AuditLog[] = [];
 let chatSessions: Map<string, ChatSession> = new Map();
 let sessionMessages: Map<string, AiChatMessage[]> = new Map();
 
-// Production starts with no fabricated chat history. Sessions are created only by real user activity.\n\n// Optional Supabase client if configured
-let supabaseClient: SupabaseClient | null = null;
-
-function getSupabase(): SupabaseClient | null {
-  if (!supabaseClient && process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)) {
-    try {
-      supabaseClient = createClient(
-        process.env.SUPABASE_URL,
-        (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)!,
-        { auth: { persistSession: false } }
-      );
-    } catch (err) {
-      console.error('Failed to initialize Supabase client:', err);
-    }
-  }
-  return supabaseClient;
-}
+// Production starts with no fabricated chat history. Sessions are created only by real user activity.\n\n// Legacy Node server is not a production persistence authority. Cloudflare Worker + D1 is authoritative.
 
 // Initialize tokens strictly from production environment secrets
 function initializeSeedData() {
@@ -114,36 +98,8 @@ initializeSeedData();
  * Returns sanitized tokens safe for frontend display
  */
 export async function listTokens(): Promise<ApiToken[]> {
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await sb.from('api_tokens').select('id, name, provider, masked_value, status, created_at, last_used_at, metadata');
-      if (!error && data && data.length > 0) {
-        return data.map((d) => ({
-          id: d.id,
-          name: d.name,
-          provider: d.provider,
-          maskedValue: d.masked_value,
-          status: d.status,
-          createdAt: d.created_at,
-          lastUsedAt: d.last_used_at,
-          metadata: d.metadata,
-          isEncrypted: true,
-        }));
-      }
-    } catch (err) {
-      console.error('Supabase query failed:', err);
-      throw new Error('Persistent token storage is unavailable');
-    }
-  }
-
-  if (process.env.NODE_ENV === 'production' && !sb) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for persistent production token storage');
-
-  // Development-only local cache, stripped of encrypted data
-  return Array.from(tokenStore.values()).map((t) => {
-    const { encryptedData, ...safe } = t;
-    return safe;
-  });
+  if (process.env.NODE_ENV === 'production') throw new Error('Legacy Node token storage is disabled in production; use the Cloudflare Worker D1-backed API');
+  return Array.from(tokenStore.values()).map((t) => { const { encryptedData, ...safe } = t; return safe; });
 }
 
 /**
