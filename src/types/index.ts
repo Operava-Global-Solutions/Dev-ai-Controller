@@ -1,6 +1,6 @@
-export type ServiceType = 'resend' | 'supabase' | 'github' | 'cloudflare' | 'openai';
+export type ServiceType = 'resend' | 'github' | 'cloudflare' | 'openai';
 
-export type TokenProvider = 'github' | 'supabase' | 'resend' | 'cloudflare' | 'openai' | 'custom';
+export type TokenProvider = 'github' | 'resend' | 'cloudflare' | 'openai' | 'custom';
 
 export type TokenStatus = 'active' | 'revoked' | 'testing' | 'error';
 
@@ -53,7 +53,7 @@ export interface ServiceStatusInfo {
 export interface DeployedApp {
   id: string;
   name: string;
-  platform: 'Cloudflare Workers' | 'Cloudflare Pages' | 'Supabase Edge';
+  platform: 'Cloudflare Workers' | 'Cloudflare Pages';
   environment: 'production' | 'staging' | 'preview';
   status: 'healthy' | 'active' | 'deploying' | 'degraded';
   url: string;
@@ -68,7 +68,7 @@ export interface DeployedApp {
 
 export interface NotificationItem {
   id: string;
-  service: 'resend' | 'cloudflare' | 'github' | 'supabase' | 'system';
+  service: 'resend' | 'cloudflare' | 'github' | 'system';
   type: 'email_sent' | 'deployment_success' | 'deployment_failed' | 'pr_opened' | 'security_alert' | 'agent_task';
   title: string;
   message: string;
@@ -99,7 +99,7 @@ export interface CodingTask {
     buildPassed: boolean;
     output: string;
   };
-  aiProviderUsed: 'cloudflare_ai' | 'openai_fallback';
+  aiProviderUsed: 'cloudflare_ai' | 'gemini_fallback' | 'openai_fallback';
   model: string;
   prUrl?: string;
   commitSha?: string;
@@ -108,7 +108,7 @@ export interface CodingTask {
 
 export type UserRole = 'User' | 'Developer / Operator' | 'Administrator';
 
-export interface SupabaseAuthUser {
+export interface AdminAuthUser {
   id: string;
   email: string;
   name: string;
