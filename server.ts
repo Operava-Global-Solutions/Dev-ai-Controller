@@ -66,15 +66,11 @@ import {
 
 // Protective authorization middleware allowing authorized operator controls
 function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const defaultUser = getAdminUserProfile();
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    const payload = verifyAdminJwt(token);
-    (req as any).user = payload || defaultUser;
-  } else {
-    (req as any).user = defaultUser;
-  }
+  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ success: false, error: 'Authentication required' });
+  const payload = verifyAdminJwt(authHeader.slice(7));
+  if (!payload) return res.status(401).json({ success: false, error: 'Invalid or expired session' });
+  (req as any).user = payload;
   next();
 }
 
@@ -185,7 +181,7 @@ async function startServer() {
 
   // 5. Authentication & Login (ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_WJT_KEY for OTP)
   // Provides Authenticator App setup configuration
-  app.get('/api/auth/authenticator-setup', (req, res) => {
+  app.get('/api/auth/authenticator-setup', requireAdminAuth, (req, res) => {
     try {
       const setup = getAuthenticatorSecret();
       res.json({
@@ -203,60 +199,41 @@ async function startServer() {
     }
   });
 
-  // Session verification endpoint for the protective wrapper
-  app.get('/api/auth/verify-session', (req, res) => {
-    try {
-      const user = getAdminUserProfile();
-      const token = createAdminJwt({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      res.json({
-        success: true,
-        valid: true,
-        user,
-        token,
-      });
-    } catch (err: any) {
-      res.status(500).json({ success: false, valid: false, error: err.message });
-    }
+  // Session verification validates an existing token; it never creates a session.
+  app.get('/api/auth/verify-session', requireAdminAuth, (req, res) => {
+    res.json({ success: true, valid: true, user: (req as any).user });
   });
 
   // Current authenticated user
-  app.get('/api/auth/me', (req, res) => {
-    const user = getAdminUserProfile();
-    res.json({ success: true, user });
+  app.get('/api/auth/me', requireAdminAuth, (req, res) => {
+    res.json({ success: true, user: (req as any).user });
   });
 
-  // Request OTP endpoint (kept for backward compatibility, returns instant success)
+  // Request an email OTP only after valid primary credentials.
   app.post('/api/auth/request-otp', async (req, res) => {
-    res.json({
-      success: true,
-      method: 'direct',
-      message: 'Operator session pre-authorized.',
-    });
+    try {
+      const { email, password } = req.body;
+      if (!validateAdminCredentials(email, password)) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      const { otp, expiresAt } = generateEmailOtp(email);
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) return res.status(503).json({ success: false, error: 'Email OTP provider is not configured' });
+      const mail = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL || 'Devai Controller <onboarding@resend.dev>', to: [email], subject: 'Your Devai Controller verification code', text: `Your verification code is ${otp}. It expires shortly.` }) });
+      if (!mail.ok) return res.status(502).json({ success: false, error: 'Email OTP delivery failed' });
+      res.json({ success: true, method: 'email', expiresAt });
+    } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
   });
 
-  // Login endpoint - always grants operator access without credentials mismatch errors
+  // Login requires both primary credentials and a valid email or authenticator OTP.
   app.post('/api/auth/login', async (req, res) => {
     try {
+      const { email, password, otp, method } = req.body;
+      if (!validateAdminCredentials(email, password)) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      if (!['email', 'authenticator'].includes(method)) return res.status(400).json({ success: false, error: 'OTP method must be email or authenticator' });
+      if (!verifyAdminOtp(email, otp, method)) return res.status(401).json({ success: false, error: 'Invalid verification code' });
       const user = getAdminUserProfile();
-      const token = createAdminJwt({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      res.json({
-        success: true,
-        token,
-        user,
-      });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
-    }
+      const token = createAdminJwt({ id: user.id, email: user.email, role: user.role });
+      res.json({ success: true, token, user });
+    } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
   });
 
   app.post('/api/auth/logout', (req, res) => {
