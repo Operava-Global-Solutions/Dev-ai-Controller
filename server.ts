@@ -3,6 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import {
   listAuditLogs,
+  addAuditLog,
   listChatSessions,
   createChatSession,
   getChatSession,
@@ -582,7 +583,7 @@ async function startServer() {
       if (!prompt || typeof prompt !== 'string') return res.status(400).json({ success: false, error: 'prompt is required' });
       if (agent.status !== 'active') return res.status(409).json({ success: false, error: 'Agent is not active' });
       const tools = listTools();
-      const missingTools = agent.enabledTools.filter((id) => !tools.some((tool) => tool.id === id));
+      const missingTools = agent.enabledTools.filter((id) => !tools.some((tool) => tool.toolId === id));
       if (missingTools.length) return res.status(503).json({ success: false, error: 'Agent capability contract is incomplete', missingTools });
       const groundedRefs = getAgentKnowledgeReferences(agent.id);
       const context = groundedRefs.length
