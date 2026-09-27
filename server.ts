@@ -62,7 +62,6 @@ import {
   getCompatibleKnowledgeForAgent,
   linkKnowledgeToAgent,
   unlinkKnowledgeFromAgent,
-  simulateAgentFlow,
 } from './server/services/agentPlatformService.js';
 
 // Protective authorization middleware allowing authorized operator controls
@@ -599,14 +598,18 @@ async function startServer() {
     }
   });
 
-  // Live Agent Pipeline Flow Simulation
-  app.post('/v1/agents/:id/simulate-flow', (req, res) => {
+  // Production Agent execution: real AI provider invocation, authenticated, no fabricated stage success.
+  app.post('/v1/agents/:id/execute', requireAdminAuth, async (req, res) => {
     try {
+      const agent = getPlatformAgent(req.params.id);
+      if (!agent) return res.status(404).json({ success: false, error: 'Agent not found' });
       const { prompt } = req.body;
-      const result = simulateAgentFlow(req.params.id, prompt);
-      res.json(result);
+      if (!prompt || typeof prompt !== 'string') return res.status(400).json({ success: false, error: 'prompt is required' });
+      const started = Date.now();
+      const completion = await generateCompletion({ prompt, systemPrompt: agent.systemPrompt });
+      res.json({ success: true, agentId: agent.id, agentName: agent.name, response: completion.text, provider: completion.provider, model: completion.model, latencyMs: Date.now() - started, tokensUsed: completion.tokensUsed });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      res.status(502).json({ success: false, error: err.message });
     }
   });
 
