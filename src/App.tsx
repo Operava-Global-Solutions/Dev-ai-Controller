@@ -43,14 +43,13 @@ export default function App() {
   // Services Status Data: production status is unknown until /api/status responds.
   const [services, setServices] = useState<Record<ServiceType, ServiceStatusInfo>>({
     cloudflare: { id: 'cloudflare', name: 'Cloudflare', role: 'Primary Runtime, Edge APIs & Cloudflare AI', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
-    supabase: { id: 'supabase', name: 'Supabase', role: 'Authentication & Central Database', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
     github: { id: 'github', name: 'GitHub', role: 'Source Code, Commits & PR Automation', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
     resend: { id: 'resend', name: 'Resend', role: 'Transactional Email & Notifications', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', features: [] },
     openai: { id: 'openai', name: 'OpenAI (Fallback)', role: 'Secondary / Fallback AI Provider', status: 'offline', latencyMs: 0, lastChecked: '', version: '', details: 'Awaiting live health check.', isFallback: true, features: [] },
   });
 
   const [systemSummary, setSystemSummary] = useState({
-    overallStatus: 'degraded' as const,
+    overallStatus: 'degraded_performance' as const,
     primaryAiProvider: 'Awaiting live health check',
     fallbackAiProvider: 'Awaiting live health check',
     totalActiveDeployments: 0,
