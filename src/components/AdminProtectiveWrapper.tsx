@@ -197,7 +197,7 @@ export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ 
               Dev’ai Controller Access
             </h2>
             <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] max-w-xs mx-auto leading-relaxed">
-              Operator session ready. Click below to access edge orchestration, code agents, and Cloudflare controls.
+              Sign in with the configured operator account. A verification code will be sent by the Worker before a session is created.
             </p>
           </div>
 
@@ -236,7 +236,7 @@ export const AdminProtectiveWrapper: React.FC<AdminProtectiveWrapperProps> = ({ 
             {authError && <p className="text-xs text-red-600 dark:text-red-400">{authError}</p>}
             <button
             type="submit"
-            onClick={() => handleUnlock()}
+            disabled={isAuthBusy}
             className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#ff6b35] via-[#ea580c] to-[#9333ea] hover:opacity-95 shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <span>{isAuthBusy ? 'Connecting…' : otpRequested ? 'Verify & Enter' : 'Send Verification Code'}</span>
