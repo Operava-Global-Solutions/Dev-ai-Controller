@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { SupabaseAuthUser } from '../src/types/index.js';
+import type { AdminAuthUser } from '../src/types/index.js';
 
 // Admin credentials configured strictly via environment variables
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
@@ -263,9 +263,9 @@ export function verifyAdminJwt(token: string): any | null {
 }
 
 /**
- * Returns default Admin SupabaseAuthUser profile
+ * Returns default Admin AdminAuthUser profile
  */
-export function getAdminUserProfile(): SupabaseAuthUser {
+export function getAdminUserProfile(): AdminAuthUser {
   return {
     id: 'usr-sb-7782194',
     email: ADMIN_EMAIL,
