@@ -34,7 +34,7 @@ export interface StoredApiToken extends ApiToken {
   encryptedData: EncryptedTokenData;
 }
 
-export type ActionStatus = 'success' | 'error' | 'simulated';
+export type ActionStatus = 'success' | 'error';
 
 export interface ServiceStatusInfo {
   id: ServiceType;
@@ -251,7 +251,6 @@ export interface WorkerSimulationResult {
   referencedDocs: string[];
   latencyMs: number;
   tokensUsed?: number;
-  simulatedPayload?: any;
   routingHeader: string;
   timestamp: string;
 }
