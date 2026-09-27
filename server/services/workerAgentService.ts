@@ -181,9 +181,9 @@ export function toggleKnowledgeDocument(id: string): KnowledgeDocument | null {
 }
 
 /**
- * Simulates the Worker Agent receiving a customer message across chosen channels and knowledge constraints
+ * Executes a real production Worker Agent AI response using the configured channel and knowledge constraints
  */
-export async function simulateWorkerAgentResponse(
+export async function executeWorkerAgentResponse(
   userMessage: string,
   overrideConfig?: Partial<WorkerAgentConfig>
 ): Promise<WorkerSimulationResult> {
@@ -319,12 +319,6 @@ CRITICAL FORMATTING MANDATES:
     referencedDocs: referencedTitles,
     latencyMs: durationMs,
     tokensUsed: completion.tokensUsed,
-    simulatedPayload: {
-      from: config.channel === 'whatsapp' ? '+1 (555) 019-2834' : config.channel === 'email' ? 'client@company.com' : 'user_fb_829104',
-      to: config.channel === 'email' ? 'support@operava.com' : 'Cloudflare Worker Webhook',
-      channel: config.channel,
-      model: completion.model,
-    },
     routingHeader: `CF-Worker-Route: ${config.cloudflareRoute}`,
     timestamp: new Date().toISOString(),
   };
