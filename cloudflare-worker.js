@@ -244,7 +244,61 @@ const PLATFORM_AGENTS = [
       outputFormat: 'Design Tokens JSON / CSS Palette Variables',
       stages: CANONICAL_STAGES,
     },
+  },,
+  {
+    id: 'agent-security-01', name: 'Security Agent', type: 'security',
+    description: 'Zero-trust security reviewer for authentication, authorization, secrets, abuse controls, dependency risk, and Cloudflare edge policy.',
+    permissions: ['knowledge.read','cloudflare.read','github.read'], enabledTools: ['knowledge.search','cloudflare.read','github.read'], status: 'active',
+    knowledgeReferences: [
+      { titleId:'zero-trust-secret-isolation-v1', title:'Zero-Trust Secrets Policy', required:true },
+      { titleId:'owasp-asvs', title:'OWASP Application Security Verification Standard', required:true },
+      { titleId:'owasp-api-security-top-10', title:'OWASP API Security Top 10', required:true },
+      { titleId:'cloudflare-workers-security-guidance', title:'Cloudflare Workers Security Guidance', required:true }
+    ],
+    structureFlow:{version:'v2026.3',canonicalModel:'7_STEP_EXECUTIVE_LIFECYCLE',entryTrigger:'Security Review, Deployment Gate, or Incident Signal',slaTargetMs:1400,outputFormat:'Risk Findings / Remediation Plan / Verification Evidence',stages:CANONICAL_STAGES}
   },
+  {
+    id:'agent-sre-01', name:'SRE & Observability Agent', type:'sre',
+    description:'Production reliability specialist for Worker health, logs, traces, SLOs, incidents, queues, cron execution, and dependency degradation.',
+    permissions:['knowledge.read','cloudflare.read'], enabledTools:['knowledge.search','cloudflare.read'], status:'active',
+    knowledgeReferences:[
+      {titleId:'cloudflare-workers-observability',title:'Cloudflare Workers Observability Guidance',required:true},
+      {titleId:'sre-slo-incident-response',title:'SRE SLO and Incident Response Standard',required:true}
+    ],
+    structureFlow:{version:'v2026.3',canonicalModel:'7_STEP_EXECUTIVE_LIFECYCLE',entryTrigger:'Health Degradation, Alert, Scheduled Reliability Review',slaTargetMs:1000,outputFormat:'Incident Diagnosis / SLO Evidence / Recovery Actions',stages:CANONICAL_STAGES}
+  },
+  {
+    id:'agent-data-01', name:'Data & Knowledge Agent', type:'data_knowledge',
+    description:'Cloudflare-native data specialist for D1 schemas, R2 document storage, Vectorize indexing, retrieval quality, migrations, and data integrity.',
+    permissions:['knowledge.read','knowledge.write','cloudflare.read'], enabledTools:['knowledge.search','knowledge.add','cloudflare.read'], status:'active',
+    knowledgeReferences:[
+      {titleId:'cloudflare-d1-production-patterns',title:'Cloudflare D1 Production Patterns',required:true},
+      {titleId:'cloudflare-r2-production-patterns',title:'Cloudflare R2 Production Patterns',required:true},
+      {titleId:'cloudflare-vectorize-rag-patterns',title:'Cloudflare Vectorize RAG Patterns',required:true},
+      {titleId:'rag-evaluation-grounding-standard',title:'RAG Evaluation and Grounding Standard',required:true}
+    ],
+    structureFlow:{version:'v2026.3',canonicalModel:'7_STEP_EXECUTIVE_LIFECYCLE',entryTrigger:'Knowledge Ingestion, Retrieval Query, Migration or Data Integrity Check',slaTargetMs:1200,outputFormat:'Grounded Retrieval / Migration Plan / Integrity Evidence',stages:CANONICAL_STAGES}
+  },
+  {
+    id:'agent-qa-01', name:'QA & Verification Agent', type:'qa_verification',
+    description:'Independent verifier that challenges agent outputs with contract tests, regression checks, evidence requirements, and failure-path testing.',
+    permissions:['knowledge.read','github.read','cloudflare.read'], enabledTools:['knowledge.search','github.read','cloudflare.read'], status:'active',
+    knowledgeReferences:[
+      {titleId:'production-verification-test-standard',title:'Production Verification and Regression Test Standard',required:true},
+      {titleId:'operava-canonical-7-step-execution-framework-v1',title:'Operava 7-Step Autonomous Governance Standard',required:true}
+    ],
+    structureFlow:{version:'v2026.3',canonicalModel:'7_STEP_EXECUTIVE_LIFECYCLE',entryTrigger:'Agent Completion, Deployment Candidate, or Regression Review',slaTargetMs:1300,outputFormat:'Pass/Fail Evidence / Regression Findings / Release Gate',stages:CANONICAL_STAGES}
+  },
+  {
+    id:'agent-research-01', name:'Research & Intelligence Agent', type:'research',
+    description:'Evidence-first research specialist that synthesizes approved knowledge, separates facts from assumptions, and returns traceable evidence.',
+    permissions:['knowledge.read'], enabledTools:['knowledge.search'], status:'active',
+    knowledgeReferences:[
+      {titleId:'source-quality-evidence-standard',title:'Source Quality and Evidence Standard',required:true},
+      {titleId:'rag-evaluation-grounding-standard',title:'RAG Evaluation and Grounding Standard',required:true}
+    ],
+    structureFlow:{version:'v2026.3',canonicalModel:'7_STEP_EXECUTIVE_LIFECYCLE',entryTrigger:'Research Request or Cross-Agent Evidence Request',slaTargetMs:1500,outputFormat:'Evidence Brief / Citations / Confidence & Unknowns',stages:CANONICAL_STAGES}
+  }
 ];
 
 
